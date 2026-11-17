@@ -1,11 +1,16 @@
 (function () {
   "use strict";
 
-  var CSV_URL = "data/cards_a1.csv";
+  var CSV_URL = "data/cards.csv";
   var AUTO_BACK_MS = 3000;
+  var LEVELS = ["A1", "A2", "B1", "B2"];
 
-  var grid = document.getElementById("card-grid");
+  var listEl = document.getElementById("card-list");
+  var tabsEl = document.getElementById("level-tabs");
   var statusEl = document.getElementById("status");
+
+  var allCards = [];
+  var activeLevel = "A1";
 
   function setStatus(message, isError) {
     if (!statusEl) return;
@@ -73,22 +78,11 @@
       var cols = parseCsvLine(line);
       var word = col(cols, "word");
       var ja = col(cols, "ja");
+      var cefr = col(cols, "cefr") || "A1";
       if (!word || !ja) continue;
-      cards.push({
-        word: word,
-        ja: ja,
-        pos: col(cols, "pos"),
-        cefr: col(cols, "cefr") || "A1",
-      });
+      cards.push({ word: word, ja: ja, cefr: cefr });
     }
     return cards;
-  }
-
-  function metaText(card) {
-    var parts = [];
-    if (card.pos) parts.push(card.pos);
-    if (card.cefr) parts.push(card.cefr);
-    return parts.join(" · ");
   }
 
   function createFace(side, card) {
@@ -96,27 +90,10 @@
     face.className = "face face-" + side;
     face.setAttribute("aria-hidden", side === "back" ? "true" : "false");
 
-    var body = document.createElement("div");
-    body.className = "face-body";
-
-    if (side === "front") {
-      var word = document.createElement("div");
-      word.className = "word";
-      word.textContent = card.word;
-      body.appendChild(word);
-    } else {
-      var ja = document.createElement("div");
-      ja.className = "ja";
-      ja.textContent = card.ja;
-      body.appendChild(ja);
-    }
-
-    var footer = document.createElement("div");
-    footer.className = "face-footer";
-    footer.textContent = metaText(card);
-
-    face.appendChild(body);
-    face.appendChild(footer);
+    var text = document.createElement("div");
+    text.className = side === "front" ? "word" : "ja";
+    text.textContent = side === "front" ? card.word : card.ja;
+    face.appendChild(text);
     return face;
   }
 
@@ -172,12 +149,44 @@
     return btn;
   }
 
-  function render(cards) {
-    grid.textContent = "";
-    for (var i = 0; i < cards.length; i++) {
-      grid.appendChild(createCard(cards[i], i));
+  function cardsForLevel(level) {
+    var out = [];
+    for (var i = 0; i < allCards.length; i++) {
+      if (allCards[i].cefr === level) out.push(allCards[i]);
     }
-    setStatus(cards.length + " cards · A1");
+    return out;
+  }
+
+  function renderTabs() {
+    tabsEl.textContent = "";
+    for (var i = 0; i < LEVELS.length; i++) {
+      var level = LEVELS[i];
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "level-tab" + (level === activeLevel ? " is-active" : "");
+      btn.setAttribute("role", "tab");
+      btn.setAttribute("aria-selected", level === activeLevel ? "true" : "false");
+      btn.dataset.level = level;
+      btn.textContent = level;
+      btn.addEventListener("click", function (ev) {
+        var next = ev.currentTarget.dataset.level;
+        if (!next || next === activeLevel) return;
+        activeLevel = next;
+        renderTabs();
+        renderList();
+        window.scrollTo(0, 0);
+      });
+      tabsEl.appendChild(btn);
+    }
+  }
+
+  function renderList() {
+    var cards = cardsForLevel(activeLevel);
+    listEl.textContent = "";
+    for (var i = 0; i < cards.length; i++) {
+      listEl.appendChild(createCard(cards[i], i));
+    }
+    setStatus(activeLevel + " · " + cards.length + " words");
   }
 
   function boot() {
@@ -188,9 +197,10 @@
         return res.text();
       })
       .then(function (text) {
-        var cards = parseCsv(text);
-        if (!cards.length) throw new Error("カードデータが空です");
-        render(cards);
+        allCards = parseCsv(text);
+        if (!allCards.length) throw new Error("カードデータが空です");
+        renderTabs();
+        renderList();
       })
       .catch(function (err) {
         setStatus(err.message || "読み込みに失敗しました", true);

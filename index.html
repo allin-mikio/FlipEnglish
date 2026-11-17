@@ -10,12 +10,12 @@
 <body>
   <header class="app-header">
     <h1>FlipEnglish</h1>
-    <p class="app-sub">A1 · tap to flip</p>
+    <div id="level-tabs" class="level-tabs" role="tablist" aria-label="CEFR level"></div>
   </header>
 
   <main class="app-main">
     <div id="status" class="status" role="status" hidden></div>
-    <div id="card-grid" class="card-grid" aria-live="polite"></div>
+    <div id="card-list" class="card-list" aria-live="polite"></div>
   </main>
 
   <script src="app.js"></script>
