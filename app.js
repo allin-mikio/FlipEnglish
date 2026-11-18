@@ -421,8 +421,8 @@
     var exampleOpen = hasExample;
     var exampleToggle = null;
     var exampleBody = null;
-    var EXAMPLE_TOGGLE_H = 28;
-    var EXAMPLE_GAP = 8;
+    var EXAMPLE_TOGGLE_H = 22;
+    var EXAMPLE_GAP = 4;
 
     if (hasExample) {
       var exampleBlock = document.createElement("div");

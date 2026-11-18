@@ -333,22 +333,23 @@ body {
   flex-direction: column;
   align-items: stretch;
   justify-content: center;
-  gap: 6px;
-  padding-top: 26px;
+  gap: 4px;
+  padding-top: 24px;
 }
 
 .back-word {
   position: absolute;
-  top: 6px;
+  top: 5px;
   left: 10px;
   z-index: 1;
   max-width: calc(100% - 20px);
   font-family: var(--font-en);
-  font-size: 0.78rem;
-  font-weight: 700;
+  font-size: 0.95rem;
+  font-weight: 800;
   line-height: 1;
   letter-spacing: 0.01em;
-  opacity: 0.72;
+  color: #ffe14a;
+  opacity: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -397,22 +398,35 @@ body {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 6px;
+  gap: 2px;
+  margin-top: 2px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.55);
+}
+
+.card:not(.is-learned):not(.is-review) .example-block {
+  border-top-color: rgba(36, 48, 56, 0.28);
 }
 
 .example-toggle {
   align-self: flex-start;
   margin: 0;
-  padding: 2px 0;
+  padding: 0;
   border: 0;
   background: transparent;
   color: inherit;
   font-family: var(--font);
   font-size: 0.78rem;
   font-weight: 800;
-  line-height: 1.2;
+  line-height: 1.15;
   opacity: 0.85;
   cursor: pointer;
+}
+
+.example-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .example-body[hidden] {
