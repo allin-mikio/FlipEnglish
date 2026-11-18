@@ -405,7 +405,8 @@
       root.setAttribute("aria-label", card.word + "。タップで訳を見る");
       front.setAttribute("aria-hidden", "false");
       back.setAttribute("aria-hidden", "true");
-      if (fromBack) applyStatus(STATUS_LEARNED);
+      // 要復習は手動専用。フリップ戻りでは未読→学習済みのみ自動遷移
+      if (fromBack && current === STATUS_UNREAD) applyStatus(STATUS_LEARNED);
     }
 
     function showBack() {
