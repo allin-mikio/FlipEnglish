@@ -59,7 +59,10 @@
   var filterEl = document.getElementById("filter-tabs");
   var statusEl = document.getElementById("status");
   var toastEl = document.getElementById("level-toast");
+  var topBtn = document.getElementById("top-btn");
+  var unreadBtn = document.getElementById("unread-btn");
   var toastTimer = null;
+  var TOP_SHOW_Y = 240;
 
   var allCards = [];
   var viewCards = [];
@@ -458,11 +461,14 @@
       root.setAttribute("aria-label", card.word + "：" + card.ja + "。タップで戻す");
       front.setAttribute("aria-hidden", "true");
       back.setAttribute("aria-hidden", "false");
-      window.scrollBy({
-        top: frontH + gapH,
-        left: 0,
-        behavior: "smooth",
-      });
+      // 未読フリップ時だけ次カードへ少し進める
+      if (current === STATUS_UNREAD) {
+        window.scrollBy({
+          top: frontH + gapH,
+          left: 0,
+          behavior: "smooth",
+        });
+      }
       autoTimer = setTimeout(function () {
         showFront(true);
       }, AUTO_BACK_MS);
@@ -598,11 +604,79 @@
     }
   }
 
+  function cardAbsTop(index) {
+    return listEl.getBoundingClientRect().top + window.scrollY + offsets[index];
+  }
+
+  function isCardInViewport(index) {
+    var top = cardAbsTop(index);
+    var bottom = top + heights[index];
+    var viewTop = window.scrollY;
+    var viewBottom = viewTop + window.innerHeight;
+    return bottom > viewTop + 4 && top < viewBottom - 4;
+  }
+
+  function hasVisibleUnread() {
+    for (var i = 0; i < viewCards.length; i++) {
+      if (getStatus(viewCards[i]) !== STATUS_UNREAD) continue;
+      if (isCardInViewport(i)) return true;
+    }
+    return false;
+  }
+
+  function findNearestUnreadIndex() {
+    var viewTop = window.scrollY;
+    var viewBottom = viewTop + window.innerHeight;
+    var bestBelow = -1;
+    var bestBelowDist = Infinity;
+    var bestAbove = -1;
+    var bestAboveDist = Infinity;
+
+    for (var i = 0; i < viewCards.length; i++) {
+      if (getStatus(viewCards[i]) !== STATUS_UNREAD) continue;
+      if (isCardInViewport(i)) continue;
+
+      var top = cardAbsTop(i);
+      var bottom = top + heights[i];
+      if (top >= viewBottom - 4) {
+        var down = top - viewBottom;
+        if (down < bestBelowDist) {
+          bestBelowDist = down;
+          bestBelow = i;
+        }
+      } else if (bottom <= viewTop + 4) {
+        var up = viewTop - bottom;
+        if (up < bestAboveDist) {
+          bestAboveDist = up;
+          bestAbove = i;
+        }
+      }
+    }
+
+    if (bestBelow >= 0) return bestBelow;
+    return bestAbove;
+  }
+
+  function jumpToNearestUnread() {
+    var idx = findNearestUnreadIndex();
+    if (idx < 0) return;
+    var y = Math.max(0, cardAbsTop(idx) - 12);
+    window.scrollTo({ top: y, behavior: "smooth" });
+  }
+
+  function updateNavBtns() {
+    if (topBtn) topBtn.hidden = window.scrollY < TOP_SHOW_Y;
+    if (!unreadBtn) return;
+    var target = findNearestUnreadIndex();
+    unreadBtn.hidden = target < 0 || hasVisibleUnread();
+  }
+
   function onScrollOrResize() {
     if (scrollRaf) return;
     scrollRaf = requestAnimationFrame(function () {
       scrollRaf = 0;
       paintVirtual(false);
+      updateNavBtns();
     });
   }
 
@@ -719,6 +793,7 @@
   function updateStatusCount() {
     // タブ側で進捗・件数が分かるので、通常時はステータス行を出さない
     setStatus("");
+    updateNavBtns();
   }
 
   function refreshTabCounts() {
@@ -840,6 +915,15 @@
     setStatus("読み込み中…");
     window.addEventListener("scroll", onScrollOrResize, { passive: true });
     window.addEventListener("resize", onScrollOrResize);
+    if (topBtn) {
+      topBtn.addEventListener("click", function () {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    }
+    if (unreadBtn) {
+      unreadBtn.addEventListener("click", jumpToNearestUnread);
+    }
+    updateNavBtns();
     document.addEventListener(
       "pointerdown",
       function (ev) {

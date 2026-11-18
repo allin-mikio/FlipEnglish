@@ -474,3 +474,45 @@ body {
   font-weight: 700;
   color: var(--muted);
 }
+
+.nav-fabs {
+  position: fixed;
+  left: max(12px, env(safe-area-inset-left));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.nav-fab {
+  pointer-events: auto;
+  margin: 0;
+  padding: 10px 14px;
+  border: 2px solid rgba(36, 48, 56, 0.2);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--text);
+  font-family: var(--font-en);
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.14);
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+#unread-btn {
+  font-family: var(--font);
+}
+
+.nav-fab[hidden] {
+  display: none;
+}
+
+.nav-fab:active {
+  transform: translateY(1px);
+}

@@ -17,18 +17,18 @@
     </h1>
 
     <fieldset class="filter-group filter-group-level">
-      <legend class="filter-group-label">レベル</legend>
-      <div id="level-tabs" class="level-tabs" role="tablist" aria-label="CEFR level"></div>
+      <legend class="filter-group-label">Level</legend>
+      <div id="level-tabs" class="level-tabs" role="tablist" aria-label="Level"></div>
     </fieldset>
 
     <fieldset class="filter-group filter-group-cat">
-      <legend class="filter-group-label">カテゴリ</legend>
-      <div id="cat-tabs" class="cat-tabs" role="tablist" aria-label="カテゴリ"></div>
+      <legend class="filter-group-label">Category</legend>
+      <div id="cat-tabs" class="cat-tabs" role="tablist" aria-label="Category"></div>
     </fieldset>
 
     <fieldset class="filter-group filter-group-status">
-      <legend class="filter-group-label">状態</legend>
-      <div id="filter-tabs" class="filter-tabs" role="tablist" aria-label="学習状態"></div>
+      <legend class="filter-group-label">Filter</legend>
+      <div id="filter-tabs" class="filter-tabs" role="tablist" aria-label="Filter"></div>
     </fieldset>
   </header>
 
@@ -38,6 +38,10 @@
   </main>
 
   <div id="level-toast" class="level-toast" hidden role="status" aria-live="polite"></div>
+  <div class="nav-fabs" aria-label="ページ移動">
+    <button type="button" id="unread-btn" class="nav-fab" hidden aria-label="一番近い未読へ">↓未読</button>
+    <button type="button" id="top-btn" class="nav-fab" hidden aria-label="ページ先頭へ">↑ Top</button>
+  </div>
 
   <script src="app.js"></script>
 </body>
