@@ -330,6 +330,25 @@ body {
 
 .face-back {
   transform: rotateX(180deg);
+  padding-top: 26px;
+}
+
+.back-word {
+  position: absolute;
+  top: 6px;
+  left: 10px;
+  z-index: 1;
+  max-width: calc(100% - 20px);
+  font-family: var(--font-en);
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  opacity: 0.72;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
 }
 
 .card.is-learned .face {

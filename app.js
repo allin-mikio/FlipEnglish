@@ -2,7 +2,6 @@
   "use strict";
 
   var CSV_URL = "data/cards.csv";
-  var AUTO_BACK_MS = 3000;
   var LEVELS = ["A1", "A2", "B1", "B2"];
   var LEVEL_INFO = {
     A1: {
@@ -395,28 +394,28 @@
     back.className = "face face-back";
     back.setAttribute("aria-hidden", "true");
 
+    var backWord = document.createElement("div");
+    backWord.className = "back-word";
+    backWord.textContent = card.word;
+
     var ja = document.createElement("div");
     ja.className = "ja";
     ja.textContent = card.ja;
+    back.appendChild(backWord);
     back.appendChild(ja);
 
     inner.appendChild(front);
     inner.appendChild(back);
     root.appendChild(inner);
 
-    var autoTimer = null;
     var longPressTimer = null;
     var longPressFired = false;
     var frontH = baseH;
     var textWidth = Math.max(0, listEl.clientWidth - 28);
-    var backH = Math.max(frontH, measureJaHeight(card.ja, textWidth || 320) + BAND_PAD_Y);
-
-    function clearAuto() {
-      if (autoTimer !== null) {
-        clearTimeout(autoTimer);
-        autoTimer = null;
-      }
-    }
+    var backH = Math.max(
+      frontH,
+      measureJaHeight(card.ja, textWidth || 320) + BAND_PAD_Y + 16
+    );
 
     function clearLongPress() {
       if (longPressTimer !== null) {
@@ -436,46 +435,41 @@
       markBtn.setAttribute("aria-label", card.word + " " + statusAria(status));
       refreshTabCounts();
       if (!matchesFilter(card)) {
-        clearAuto();
         renderList(false);
         return;
       }
       updateStatusCount();
     }
 
-    function showFront(fromBack) {
-      clearAuto();
+    function showFront() {
       root.classList.remove("is-flipped");
       setItemHeight(index, frontH, true);
       root.setAttribute("aria-label", card.word + "。タップで訳を見る");
       front.setAttribute("aria-hidden", "false");
       back.setAttribute("aria-hidden", "true");
-      // 要復習は手動専用。フリップ戻りでは未読→学習済みのみ自動遷移
-      if (fromBack && current === STATUS_UNREAD) applyStatus(STATUS_LEARNED);
     }
 
     function showBack() {
-      clearAuto();
+      var wasUnread = current === STATUS_UNREAD;
       root.classList.add("is-flipped");
       setItemHeight(index, backH, true);
       root.setAttribute("aria-label", card.word + "：" + card.ja + "。タップで戻す");
       front.setAttribute("aria-hidden", "true");
       back.setAttribute("aria-hidden", "false");
-      // 未読フリップ時だけ次カードへ少し進める
-      if (current === STATUS_UNREAD) {
+      // 裏を見た時点で未読→学習済み。要復習は手動専用
+      if (wasUnread) applyStatus(STATUS_LEARNED);
+      // 未読フリップ時は裏面の占有高さ分スクロールし、同じ位置のタップで次へ進める
+      if (wasUnread) {
         window.scrollBy({
-          top: frontH + gapH,
+          top: backH + gapH,
           left: 0,
           behavior: "smooth",
         });
       }
-      autoTimer = setTimeout(function () {
-        showFront(true);
-      }, AUTO_BACK_MS);
     }
 
     function toggleFlip() {
-      if (root.classList.contains("is-flipped")) showFront(true);
+      if (root.classList.contains("is-flipped")) showFront();
       else showBack();
     }
 
@@ -528,7 +522,6 @@
     });
 
     root._teardown = function () {
-      clearAuto();
       clearLongPress();
     };
     return root;
@@ -660,7 +653,8 @@
   function jumpToNearestUnread() {
     var idx = findNearestUnreadIndex();
     if (idx < 0) return;
-    var y = Math.max(0, cardAbsTop(idx) - 12);
+    var cardMid = cardAbsTop(idx) + heights[idx] / 2;
+    var y = Math.max(0, cardMid - window.innerHeight / 2);
     window.scrollTo({ top: y, behavior: "smooth" });
   }
 
