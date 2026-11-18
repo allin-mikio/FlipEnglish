@@ -353,6 +353,12 @@
       root.setAttribute("aria-label", card.word + "：" + card.ja + "。タップで戻す");
       front.setAttribute("aria-hidden", "true");
       back.setAttribute("aria-hidden", "false");
+      // 学習を進めるため、フリップと同時に1項目分だけリストを上へ送る
+      window.scrollBy({
+        top: frontH + gapH,
+        left: 0,
+        behavior: "smooth",
+      });
       autoTimer = setTimeout(function () {
         showFront(true);
       }, AUTO_BACK_MS);
