@@ -20,7 +20,7 @@
   --group-status-label: #e07000;
   /* 純色寄り（ピンク赤・アンバー黄を避ける） */
   --select-active: #ff0000;
-  --progress-fill: #ffff00;
+  --progress-fill: #e6d66a;
   --font: "Noto Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN",
     "Yu Gothic", YuGothic, Meiryo, sans-serif;
   /* ブランドロゴのみ丸みフォント。本文・タブ・英単語は潰れない定番ゴシック */
@@ -50,13 +50,9 @@ body {
 }
 
 .app-header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  position: relative;
   padding: 10px 12px 10px;
-  background: rgba(255, 250, 246, 0.88);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: transparent;
   border-bottom: 1px solid rgba(36, 48, 56, 0.08);
 }
 
