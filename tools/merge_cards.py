@@ -131,11 +131,58 @@ def format_ja(raw: str) -> str:
     return cleaned
 
 
+def headword_priority(token: str) -> int:
+    """Prefer common lowercase lemmas over acronyms / chemical symbols."""
+    raw = token.strip()
+    if not raw:
+        return -1
+    # as / at / cap など通常見出しを最優先
+    if raw.islower():
+        return 4
+    letters = re.sub(r"[^A-Za-z]", "", raw)
+    if letters and letters.isupper() and len(letters) <= 5:
+        # CAP, AS, AT のような略語・記号
+        return 0
+    if letters and letters[:1].isupper() and letters[1:].islower() and len(letters) <= 2:
+        # As, At のような元素記号
+        return 1
+    if raw[:1].isupper() and raw[1:].islower():
+        return 2
+    return 3
+
+
+def should_replace_gloss(
+    prev_gloss: str,
+    prev_prio: int,
+    gloss: str,
+    prio: int,
+) -> bool:
+    prev_ja = bool(HAS_JA_RE.search(prev_gloss))
+    new_ja = bool(HAS_JA_RE.search(gloss))
+    if new_ja and not prev_ja:
+        return True
+    if prev_ja and not new_ja:
+        return False
+    if prio > prev_prio:
+        return True
+    if prio == prev_prio and len(gloss) > len(prev_gloss) * 1.4:
+        # 同じ優先度なら、明らかに詳しい語義を採用
+        return True
+    return False
+
+
 def load_ejdict(src_dir: Path) -> dict[str, str]:
     mapping: dict[str, str] = {}
+    priority: dict[str, int] = {}
     files = sorted(src_dir.glob("*.txt"))
     if not files:
         raise FileNotFoundError(f"EJDict src not found: {src_dir}")
+
+    def put(key: str, gloss: str, prio: int) -> None:
+        prev = mapping.get(key)
+        if prev is None or should_replace_gloss(prev, priority.get(key, -1), gloss, prio):
+            mapping[key] = gloss
+            priority[key] = prio
 
     for path in files:
         for line in path.read_text(encoding="utf-8").splitlines():
@@ -149,18 +196,11 @@ def load_ejdict(src_dir: Path) -> dict[str, str]:
                 key = normalize_word(token)
                 if not key:
                     continue
-                prev = mapping.get(key)
-                if prev is None:
-                    mapping[key] = gloss
-                elif not HAS_JA_RE.search(prev) and HAS_JA_RE.search(gloss):
-                    mapping[key] = gloss
+                prio = headword_priority(token)
+                put(key, gloss, prio)
                 compact = key.replace(" ", "")
                 if compact != key:
-                    prev_c = mapping.get(compact)
-                    if prev_c is None:
-                        mapping[compact] = gloss
-                    elif not HAS_JA_RE.search(prev_c) and HAS_JA_RE.search(gloss):
-                        mapping[compact] = gloss
+                    put(compact, gloss, prio)
     return mapping
 
 
