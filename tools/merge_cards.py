@@ -14,6 +14,7 @@ CEFR_PATH = ROOT / "cefrj-vocabulary-profile-1.5.csv"
 EJDICT_DIR = ROOT / "vendor" / "EJDict-master" / "src"
 OUT_MATCHED = ROOT / "data" / "cards.csv"
 OUT_UNMATCHED = ROOT / "data" / "unmatched.csv"
+EXAMPLES_PATH = ROOT / "data" / "examples.csv"
 LEVELS = ("A1", "A2", "B1", "B2")
 CAT_OTHER = "other"
 CAT_LABELS = {
@@ -171,6 +172,24 @@ def should_replace_gloss(
     return False
 
 
+def load_examples(path: Path) -> dict[tuple[str, str], dict[str, str]]:
+    """Optional curated examples keyed by (normalized word, CEFR)."""
+    out: dict[tuple[str, str], dict[str, str]] = {}
+    if not path.exists():
+        return out
+    with path.open(encoding="utf-8-sig", newline="") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            word = normalize_word(row.get("word") or "")
+            cefr = (row.get("cefr") or "").strip()
+            en = (row.get("example_en") or "").strip()
+            ja = (row.get("example_ja") or "").strip()
+            if not word or cefr not in LEVELS or not en or not ja:
+                continue
+            out[(word, cefr)] = {"example_en": en, "example_ja": ja}
+    return out
+
+
 def load_ejdict(src_dir: Path) -> dict[str, str]:
     mapping: dict[str, str] = {}
     priority: dict[str, int] = {}
@@ -211,7 +230,9 @@ def main() -> int:
         return 1
 
     ejdict = load_ejdict(EJDICT_DIR)
+    examples = load_examples(EXAMPLES_PATH)
     print(f"EJDICT entries indexed: {len(ejdict)}")
+    print(f"Curated examples: {len(examples)}")
 
     matched_rows: list[dict[str, str]] = []
     unmatched_rows: list[dict[str, str]] = []
@@ -262,6 +283,7 @@ def main() -> int:
                 continue
 
             ja = format_ja(raw_ja or "")
+            ex = examples.get((normalize_word(headword.split("/")[0]), cefr), {})
             by_level[cefr] += 1
             by_cat[cat] += 1
             by_level_cat[(cefr, cat)] += 1
@@ -272,6 +294,8 @@ def main() -> int:
                     "cefr": cefr,
                     "cat": cat,
                     "theme": theme,
+                    "example_en": ex.get("example_en", ""),
+                    "example_ja": ex.get("example_ja", ""),
                 }
             )
 
@@ -282,7 +306,18 @@ def main() -> int:
     OUT_MATCHED.parent.mkdir(parents=True, exist_ok=True)
 
     with OUT_MATCHED.open("w", encoding="utf-8-sig", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=["word", "ja", "cefr", "cat", "theme"])
+        writer = csv.DictWriter(
+            f,
+            fieldnames=[
+                "word",
+                "ja",
+                "cefr",
+                "cat",
+                "theme",
+                "example_en",
+                "example_ja",
+            ],
+        )
         writer.writeheader()
         writer.writerows(matched_rows)
 

@@ -204,8 +204,17 @@
       var ja = col(cols, "ja");
       var cefr = col(cols, "cefr") || "A1";
       var cat = col(cols, "cat") || "other";
+      var exampleEn = col(cols, "example_en");
+      var exampleJa = col(cols, "example_ja");
       if (!word || !ja) continue;
-      cards.push({ word: word, ja: ja, cefr: cefr, cat: cat });
+      cards.push({
+        word: word,
+        ja: ja,
+        cefr: cefr,
+        cat: cat,
+        exampleEn: exampleEn,
+        exampleJa: exampleJa,
+      });
     }
     return cards;
   }
@@ -221,9 +230,9 @@
     gapH = cssPx("--card-gap", 8);
   }
 
-  function measureJaHeight(text, widthPx) {
+  function measureClassHeight(className, text, widthPx) {
     var probe = document.createElement("div");
-    probe.className = "ja";
+    probe.className = className;
     probe.style.position = "absolute";
     probe.style.visibility = "hidden";
     probe.style.pointerEvents = "none";
@@ -237,6 +246,10 @@
     var h = Math.ceil(probe.getBoundingClientRect().height || probe.scrollHeight);
     document.body.removeChild(probe);
     return h;
+  }
+
+  function measureJaHeight(text, widthPx) {
+    return measureClassHeight("ja", text, widthPx);
   }
 
   function matchesFilter(card) {
@@ -404,6 +417,42 @@
     back.appendChild(backWord);
     back.appendChild(ja);
 
+    var hasExample = !!(card.exampleEn && card.exampleJa);
+    var exampleOpen = hasExample;
+    var exampleToggle = null;
+    var exampleBody = null;
+    var EXAMPLE_TOGGLE_H = 28;
+    var EXAMPLE_GAP = 8;
+
+    if (hasExample) {
+      var exampleBlock = document.createElement("div");
+      exampleBlock.className = "example-block";
+
+      exampleToggle = document.createElement("button");
+      exampleToggle.type = "button";
+      exampleToggle.className = "example-toggle";
+      exampleToggle.textContent = "▼ 例文";
+      exampleToggle.setAttribute("aria-expanded", "true");
+
+      exampleBody = document.createElement("div");
+      exampleBody.className = "example-body";
+      exampleBody.hidden = false;
+
+      var exampleEn = document.createElement("div");
+      exampleEn.className = "example-en";
+      exampleEn.textContent = card.exampleEn;
+
+      var exampleJaEl = document.createElement("div");
+      exampleJaEl.className = "example-ja";
+      exampleJaEl.textContent = card.exampleJa;
+
+      exampleBody.appendChild(exampleEn);
+      exampleBody.appendChild(exampleJaEl);
+      exampleBlock.appendChild(exampleToggle);
+      exampleBlock.appendChild(exampleBody);
+      back.appendChild(exampleBlock);
+    }
+
     inner.appendChild(front);
     inner.appendChild(back);
     root.appendChild(inner);
@@ -412,10 +461,37 @@
     var longPressFired = false;
     var frontH = baseH;
     var textWidth = Math.max(0, listEl.clientWidth - 28);
-    var backH = Math.max(
-      frontH,
-      measureJaHeight(card.ja, textWidth || 320) + BAND_PAD_Y + 16
-    );
+    var jaH = measureJaHeight(card.ja, textWidth || 320);
+    var exampleClosedExtra = hasExample ? EXAMPLE_TOGGLE_H + EXAMPLE_GAP : 0;
+    var exampleOpenExtra = 0;
+    if (hasExample) {
+      exampleOpenExtra =
+        EXAMPLE_TOGGLE_H +
+        EXAMPLE_GAP +
+        measureClassHeight("example-en", card.exampleEn, textWidth || 320) +
+        4 +
+        measureClassHeight("example-ja", card.exampleJa, textWidth || 320) +
+        EXAMPLE_GAP;
+    }
+    var backHClosed = Math.max(frontH, jaH + BAND_PAD_Y + 16 + exampleClosedExtra);
+    var backHOpen = Math.max(frontH, jaH + BAND_PAD_Y + 16 + exampleOpenExtra);
+    var backH = exampleOpen ? backHOpen : backHClosed;
+
+    function currentBackH() {
+      return exampleOpen ? backHOpen : backHClosed;
+    }
+
+    function setExampleOpen(open) {
+      if (!hasExample || !exampleToggle || !exampleBody) return;
+      exampleOpen = open;
+      exampleBody.hidden = !open;
+      exampleToggle.textContent = open ? "▼ 例文" : "▶ 例文";
+      exampleToggle.setAttribute("aria-expanded", open ? "true" : "false");
+      backH = currentBackH();
+      if (root.classList.contains("is-flipped")) {
+        setItemHeight(index, backH, true);
+      }
+    }
 
     function clearLongPress() {
       if (longPressTimer !== null) {
@@ -451,6 +527,8 @@
 
     function showBack() {
       var wasUnread = current === STATUS_UNREAD;
+      if (hasExample) setExampleOpen(true);
+      backH = currentBackH();
       root.classList.add("is-flipped");
       setItemHeight(index, backH, true);
       root.setAttribute("aria-label", card.word + "：" + card.ja + "。タップで戻す");
@@ -480,11 +558,16 @@
 
     root.addEventListener("click", function (ev) {
       if (statusCol.contains(ev.target)) return;
+      if (exampleToggle && exampleToggle.contains(ev.target)) return;
+      if (exampleBody && !exampleBody.hidden && exampleBody.contains(ev.target)) {
+        return;
+      }
       toggleFlip();
     });
 
     root.addEventListener("keydown", function (ev) {
       if (ev.target === markBtn) return;
+      if (exampleToggle && ev.target === exampleToggle) return;
       if (ev.key === "Enter" || ev.key === " ") {
         ev.preventDefault();
         toggleFlip();
@@ -494,6 +577,13 @@
     statusCol.addEventListener("click", function (ev) {
       ev.stopPropagation();
     });
+
+    if (exampleToggle) {
+      exampleToggle.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        setExampleOpen(!exampleOpen);
+      });
+    }
 
     markBtn.addEventListener("click", function (ev) {
       ev.stopPropagation();
