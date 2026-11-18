@@ -4,7 +4,7 @@
   --muted: #5a6a72;
   --card-gap: 8px;
   --flip-ms: 420ms;
-  --band-h: 62px;
+  --band-h: 68px;
   --check-size: 26px;
   --review: #e07000;
   --brand-flip: #ff4d2e;
@@ -20,7 +20,9 @@
   --group-status-label: #e07000;
   --font: "Noto Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN",
     "Yu Gothic", YuGothic, Meiryo, sans-serif;
-  --font-en: "Fredoka", "Segoe UI", "Helvetica Neue", sans-serif;
+  /* ブランドロゴのみ丸みフォント。本文・タブ・英単語は潰れない定番ゴシック */
+  --font-brand: "Fredoka", "Segoe UI", "Helvetica Neue", sans-serif;
+  --font-en: "Segoe UI", "Helvetica Neue", "Arial", system-ui, sans-serif;
 }
 
 * {
@@ -57,7 +59,7 @@ body {
 
 .brand {
   margin: 0 0 2px;
-  font-family: var(--font-en);
+  font-family: var(--font-brand);
   font-size: 1.7rem;
   font-weight: 700;
   letter-spacing: 0.01em;
@@ -161,8 +163,9 @@ body {
 
 .level-tab {
   font-family: var(--font-en);
-  font-size: 1.05rem;
-  letter-spacing: 0.04em;
+  font-size: 1.12rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
 }
 
 .cat-tab {
@@ -299,9 +302,10 @@ body {
   min-width: 0;
   padding-left: calc(var(--check-size) + 12px);
   font-family: var(--font-en);
-  font-size: clamp(1.2rem, 5.2vw, 1.55rem);
+  font-size: clamp(1.45rem, 6.5vw, 1.9rem);
   font-weight: 700;
-  line-height: 1.15;
+  line-height: 1.1;
+  letter-spacing: 0;
   text-align: center;
   white-space: nowrap;
   overflow: hidden;
