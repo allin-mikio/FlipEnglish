@@ -15,6 +15,72 @@ EJDICT_DIR = ROOT / "vendor" / "EJDict-master" / "src"
 OUT_MATCHED = ROOT / "data" / "cards.csv"
 OUT_UNMATCHED = ROOT / "data" / "unmatched.csv"
 LEVELS = ("A1", "A2", "B1", "B2")
+CAT_OTHER = "other"
+CAT_LABELS = {
+    "life": "生活",
+    "town": "街・移動",
+    "people": "人・仕事",
+    "hobby": "趣味",
+    "other": "その他",
+}
+
+# Raw CEFR theme -> coarse category id
+THEME_TO_CAT = {
+    # 生活
+    "food and drink": "life",
+    "clothes": "life",
+    "house and home, environment": "life",
+    "objects and rooms": "life",
+    "family life": "life",
+    "daily life": "life",
+    "health and body care": "life",
+    "weather": "life",
+    "colours": "life",
+    "colors": "life",
+    # 街・移動
+    "things in the town, shops and shopping": "town",
+    "shopping": "town",
+    "travel": "town",
+    "travel and services vocab": "town",
+    "ways of travelling": "town",
+    "holidays": "town",
+    "services": "town",
+    "places": "town",
+    # 人・仕事・学校
+    "personal identification": "people",
+    "personal information": "people",
+    "work and jobs": "people",
+    "education": "people",
+    "relations with other people": "people",
+    "nationalities and countries": "people",
+    "adjectives: personality, description, feelings": "people",
+    # 趣味・メディア
+    "hobbies and pastimes": "hobby",
+    "hobbies and lifestyles": "hobby",
+    "free time, entertainment": "hobby",
+    "leisure activities": "hobby",
+    "media": "hobby",
+    "arts": "hobby",
+    "books and literature": "hobby",
+    "film": "hobby",
+    "language": "hobby",
+    "news, lifestyles and current affairs": "hobby",
+}
+
+
+def raw_theme(row: dict[str, str]) -> str:
+    for key in ("CoreInventory 1", "CoreInventory 2", "Threshold"):
+        value = (row.get(key) or "").strip()
+        if value:
+            return value
+    return ""
+
+
+def category_of(theme: str) -> str:
+    if not theme:
+        return CAT_OTHER
+    return THEME_TO_CAT.get(theme.strip().lower(), CAT_OTHER)
+
 
 SPLIT_HEAD_RE = re.compile(r"[/]")
 COMMA_SPLIT_RE = re.compile(r"\s*,\s*")
@@ -58,31 +124,11 @@ def headword_candidates(headword: str) -> list[str]:
     return out
 
 
-def shorten_ja(raw: str, max_senses: int = 2, max_len: int = 40) -> str:
+def format_ja(raw: str) -> str:
+    """Keep the full dictionary gloss; only light cleanup, no truncation."""
     cleaned = MARKER_RE.sub("", raw)
-    senses = [s.strip(" ,;、。") for s in SENSE_SPLIT_RE.split(cleaned) if s.strip()]
-    if not senses:
-        return ""
-
-    ja_senses: list[str] = []
-    for sense in senses:
-        sense = SPACE_RE.sub(" ", sense).strip()
-        if not HAS_JA_RE.search(sense):
-            continue
-        sense = re.sub(r"\s+", "", sense)
-        if sense:
-            ja_senses.append(sense)
-        if len(ja_senses) >= max_senses:
-            break
-
-    if not ja_senses:
-        fallback = re.sub(r"\s+", "", senses[0])
-        ja_senses = [fallback] if fallback else []
-
-    text = "；".join(ja_senses)
-    if len(text) > max_len:
-        text = text[: max_len - 1] + "…"
-    return text
+    cleaned = SPACE_RE.sub(" ", cleaned).strip()
+    return cleaned
 
 
 def load_ejdict(src_dir: Path) -> dict[str, str]:
@@ -132,6 +178,8 @@ def main() -> int:
     seen_keys: set[tuple[str, str]] = set()
     by_level = Counter()
     unmatched_by_level = Counter()
+    by_cat = Counter()
+    by_level_cat: Counter[tuple[str, str]] = Counter()
 
     with CEFR_PATH.open(encoding="utf-8-sig", newline="") as f:
         reader = csv.DictReader(f)
@@ -148,6 +196,9 @@ def main() -> int:
                 continue
             seen_keys.add(dedupe_key)
 
+            theme = raw_theme(row)
+            cat = category_of(theme)
+
             candidates = headword_candidates(headword)
             found_key = None
             raw_ja = None
@@ -163,18 +214,24 @@ def main() -> int:
                     {
                         "word": headword,
                         "cefr": cefr,
+                        "cat": cat,
+                        "theme": theme,
                         "tried": "|".join(candidates),
                     }
                 )
                 continue
 
-            ja = shorten_ja(raw_ja or "")
+            ja = format_ja(raw_ja or "")
             by_level[cefr] += 1
+            by_cat[cat] += 1
+            by_level_cat[(cefr, cat)] += 1
             matched_rows.append(
                 {
                     "word": headword,
                     "ja": ja,
                     "cefr": cefr,
+                    "cat": cat,
+                    "theme": theme,
                 }
             )
 
@@ -185,12 +242,14 @@ def main() -> int:
     OUT_MATCHED.parent.mkdir(parents=True, exist_ok=True)
 
     with OUT_MATCHED.open("w", encoding="utf-8-sig", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=["word", "ja", "cefr"])
+        writer = csv.DictWriter(f, fieldnames=["word", "ja", "cefr", "cat", "theme"])
         writer.writeheader()
         writer.writerows(matched_rows)
 
     with OUT_UNMATCHED.open("w", encoding="utf-8-sig", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=["word", "cefr", "tried"])
+        writer = csv.DictWriter(
+            f, fieldnames=["word", "cefr", "cat", "theme", "tried"]
+        )
         writer.writeheader()
         writer.writerows(unmatched_rows)
 
@@ -201,6 +260,12 @@ def main() -> int:
     print(f"Unmatched:     {len(unmatched_rows)}")
     for level in LEVELS:
         print(f"  {level}: matched {by_level[level]}, unmatched {unmatched_by_level[level]}")
+    print("Categories:")
+    for cat_id, label in CAT_LABELS.items():
+        print(f"  {label}: {by_cat[cat_id]}")
+    print("A1 by category:")
+    for cat_id, label in CAT_LABELS.items():
+        print(f"  {label}: {by_level_cat[('A1', cat_id)]}")
     print(f"Wrote:         {OUT_MATCHED}")
     print(f"Wrote:         {OUT_UNMATCHED}")
     return 0
