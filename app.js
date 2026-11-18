@@ -4,6 +4,32 @@
   var CSV_URL = "data/cards.csv";
   var AUTO_BACK_MS = 3000;
   var LEVELS = ["A1", "A2", "B1", "B2"];
+  var LEVEL_INFO = {
+    A1: {
+      color: "#259B4D",
+      label: "入門",
+      school: "小学校高学年 〜 中学校基礎",
+      eiken: "英検5級 〜 3級",
+    },
+    A2: {
+      color: "#28A7E0",
+      label: "初級",
+      school: "中学校卒業 〜 高校基礎",
+      eiken: "英検準2級",
+    },
+    B1: {
+      color: "#F58F1E",
+      label: "中級",
+      school: "高校卒業 〜 大学入試標準",
+      eiken: "英検2級",
+    },
+    B2: {
+      color: "#D51F6E",
+      label: "中上級",
+      school: "難関大学入試 〜 大学生・ビジネス",
+      eiken: "英検準1級",
+    },
+  };
   var STATUS_UNREAD = "unread";
   var STATUS_LEARNED = "learned";
   var STATUS_REVIEW = "review";
@@ -12,6 +38,7 @@
     { id: "unread", label: "未読" },
     { id: "review", label: "要復習" },
   ];
+  var TOAST_MS = 5000;
   var CATS = [
     { id: "all", label: "全部" },
     { id: "life", label: "生活" },
@@ -31,6 +58,8 @@
   var catEl = document.getElementById("cat-tabs");
   var filterEl = document.getElementById("filter-tabs");
   var statusEl = document.getElementById("status");
+  var toastEl = document.getElementById("level-toast");
+  var toastTimer = null;
 
   var allCards = [];
   var viewCards = [];
@@ -603,6 +632,10 @@
     return { total: total, on: on, off: total - on };
   }
 
+  function progressPct(on, total) {
+    return total > 0 ? Math.round((on / total) * 1000) / 10 : 0;
+  }
+
   function fillTabButton(btn, title, on, total) {
     btn.textContent = "";
     var titleEl = document.createElement("span");
@@ -614,26 +647,78 @@
     btn.appendChild(titleEl);
     btn.appendChild(countEl);
     btn.setAttribute("aria-label", title + " " + on + "/" + total);
-    var pct = total > 0 ? Math.round((on / total) * 1000) / 10 : 0;
-    btn.style.setProperty("--progress", pct + "%");
+    btn.style.setProperty("--progress", progressPct(on, total) + "%");
+  }
+
+  function fillLevelTab(btn, level, on, total) {
+    var info = LEVEL_INFO[level] || { color: "#888", label: "" };
+    btn.textContent = "";
+    btn.style.setProperty("--level-color", info.color);
+    btn.style.setProperty("--progress", progressPct(on, total) + "%");
+
+    var titleEl = document.createElement("span");
+    titleEl.className = "tab-title";
+    titleEl.textContent = level;
+
+    var countEl = document.createElement("span");
+    countEl.className = "tab-count";
+    countEl.textContent = on + "/" + total;
+
+    btn.appendChild(titleEl);
+    btn.appendChild(countEl);
+    btn.setAttribute(
+      "aria-label",
+      level + " " + info.label + " " + on + "/" + total
+    );
+  }
+
+  function hideLevelToast() {
+    if (!toastEl) return;
+    toastEl.hidden = true;
+    toastEl.textContent = "";
+    if (toastTimer !== null) {
+      clearTimeout(toastTimer);
+      toastTimer = null;
+    }
+  }
+
+  function showLevelToast(level) {
+    if (!toastEl) return;
+    var info = LEVEL_INFO[level];
+    if (!info) return;
+    var stats = countLevelStats(level);
+    toastEl.style.setProperty("--toast-color", info.color);
+    toastEl.textContent = "";
+
+    var badge = document.createElement("div");
+    badge.className = "level-toast-badge";
+    badge.textContent = level + " " + info.label;
+
+    var school = document.createElement("div");
+    school.className = "level-toast-line";
+    school.textContent = "学校: " + info.school;
+
+    var eiken = document.createElement("div");
+    eiken.className = "level-toast-line";
+    eiken.textContent = "英検: " + info.eiken;
+
+    var words = document.createElement("div");
+    words.className = "level-toast-words";
+    words.textContent = stats.total.toLocaleString("ja-JP") + "語";
+
+    toastEl.appendChild(badge);
+    toastEl.appendChild(school);
+    toastEl.appendChild(eiken);
+    toastEl.appendChild(words);
+    toastEl.hidden = false;
+
+    if (toastTimer !== null) clearTimeout(toastTimer);
+    toastTimer = setTimeout(hideLevelToast, TOAST_MS);
   }
 
   function updateStatusCount() {
-    var stats = countLevelStats();
-    setStatus(
-      activeLevel +
-        " · " +
-        catLabel(activeCat) +
-        " · " +
-        currentFilterLabel() +
-        " " +
-        viewCards.length +
-        " / 全" +
-        stats.total +
-        "（学習済 " +
-        stats.on +
-        "）"
-    );
+    // タブ側で進捗・件数が分かるので、通常時はステータス行を出さない
+    setStatus("");
   }
 
   function refreshTabCounts() {
@@ -648,18 +733,25 @@
       var stats = countLevelStats(level);
       var btn = document.createElement("button");
       btn.type = "button";
-      btn.className = "level-tab" + (level === activeLevel ? " is-active" : "");
+      btn.className =
+        "level-tab level-" +
+        level.toLowerCase() +
+        (level === activeLevel ? " is-active" : "");
       btn.setAttribute("role", "tab");
       btn.setAttribute("aria-selected", level === activeLevel ? "true" : "false");
       btn.dataset.level = level;
-      fillTabButton(btn, level, stats.on, stats.total);
+      fillLevelTab(btn, level, stats.on, stats.total);
       btn.addEventListener("click", function (ev) {
         var next = ev.currentTarget.dataset.level;
-        if (!next || next === activeLevel) return;
+        if (!next) return;
+        var changed = next !== activeLevel;
         activeLevel = next;
         renderTabs();
-        renderCats();
-        renderList(true);
+        if (changed) {
+          renderCats();
+          renderList(true);
+        }
+        showLevelToast(next);
       });
       tabsEl.appendChild(btn);
     }
@@ -748,6 +840,16 @@
     setStatus("読み込み中…");
     window.addEventListener("scroll", onScrollOrResize, { passive: true });
     window.addEventListener("resize", onScrollOrResize);
+    document.addEventListener(
+      "pointerdown",
+      function (ev) {
+        if (!toastEl || toastEl.hidden) return;
+        if (toastEl.contains(ev.target)) return;
+        if (ev.target.closest && ev.target.closest(".level-tab")) return;
+        hideLevelToast();
+      },
+      true
+    );
 
     fetch(CSV_URL + "?t=" + Date.now())
       .then(function (res) {
