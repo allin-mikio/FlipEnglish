@@ -40,7 +40,9 @@
   var mounted = Object.create(null);
   var activeLevel = "A1";
   var activeCat = "all";
-  var activeFilter = "all";
+  var filterAll = true;
+  var filterUnread = false;
+  var filterReview = false;
   var statusMap = loadStatusMap();
   var baseH = 56;
   var gapH = 8;
@@ -208,10 +210,11 @@
 
   function matchesFilter(card) {
     if (activeCat !== "all" && card.cat !== activeCat) return false;
+    if (filterAll) return true;
     var st = getStatus(card);
-    if (activeFilter === "unread") return st === STATUS_UNREAD;
-    if (activeFilter === "review") return st === STATUS_REVIEW;
-    return true;
+    if (filterUnread && st === STATUS_UNREAD) return true;
+    if (filterReview && st === STATUS_REVIEW) return true;
+    return false;
   }
 
   function catLabel(id) {
@@ -221,11 +224,21 @@
     return id;
   }
 
-  function filterLabel(id) {
-    for (var i = 0; i < FILTERS.length; i++) {
-      if (FILTERS[i].id === id) return FILTERS[i].label;
+  function currentFilterLabel() {
+    if (filterAll) return "すべて";
+    var parts = [];
+    if (filterUnread) parts.push("未読");
+    if (filterReview) parts.push("要復習");
+    return parts.length ? parts.join("+") : "すべて";
+  }
+
+  function normalizeStatusFilters() {
+    if (filterAll) {
+      filterUnread = false;
+      filterReview = false;
+      return;
     }
-    return id;
+    if (!filterUnread && !filterReview) filterAll = true;
   }
 
   function assignLevelIndexes() {
@@ -601,6 +614,8 @@
     btn.appendChild(titleEl);
     btn.appendChild(countEl);
     btn.setAttribute("aria-label", title + " " + on + "/" + total);
+    var pct = total > 0 ? Math.round((on / total) * 1000) / 10 : 0;
+    btn.style.setProperty("--progress", pct + "%");
   }
 
   function updateStatusCount() {
@@ -610,7 +625,7 @@
         " · " +
         catLabel(activeCat) +
         " · " +
-        filterLabel(activeFilter) +
+        currentFilterLabel() +
         " " +
         viewCards.length +
         " / 全" +
@@ -674,25 +689,47 @@
   }
 
   function renderFilters() {
+    normalizeStatusFilters();
     filterEl.textContent = "";
-    for (var i = 0; i < FILTERS.length; i++) {
-      var item = FILTERS[i];
-      var btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "filter-tab" + (item.id === activeFilter ? " is-active" : "");
-      btn.setAttribute("role", "tab");
-      btn.setAttribute("aria-selected", item.id === activeFilter ? "true" : "false");
-      btn.dataset.filter = item.id;
-      btn.textContent = item.label;
-      btn.addEventListener("click", function (ev) {
-        var next = ev.currentTarget.dataset.filter;
-        if (!next || next === activeFilter) return;
-        activeFilter = next;
+    filterEl.className = "filter-checks";
+
+    function addCheck(id, label, checked) {
+      var wrap = document.createElement("label");
+      wrap.className = "status-check" + (checked ? " is-on" : "");
+      var input = document.createElement("input");
+      input.type = "checkbox";
+      input.checked = checked;
+      input.dataset.filter = id;
+      var text = document.createElement("span");
+      text.textContent = label;
+      wrap.appendChild(input);
+      wrap.appendChild(text);
+      input.addEventListener("change", function () {
+        if (id === "all") {
+          filterAll = input.checked;
+          if (filterAll) {
+            filterUnread = false;
+            filterReview = false;
+          } else if (!filterUnread && !filterReview) {
+            filterAll = true;
+          }
+        } else if (id === "unread") {
+          filterUnread = input.checked;
+          if (filterUnread) filterAll = false;
+        } else if (id === "review") {
+          filterReview = input.checked;
+          if (filterReview) filterAll = false;
+        }
+        normalizeStatusFilters();
         renderFilters();
         renderList(true);
       });
-      filterEl.appendChild(btn);
+      filterEl.appendChild(wrap);
     }
+
+    addCheck("all", "すべて", filterAll);
+    addCheck("unread", "未読", filterUnread);
+    addCheck("review", "要復習", filterReview);
   }
 
   function renderList(scrollTop) {

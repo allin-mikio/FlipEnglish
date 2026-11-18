@@ -9,15 +9,18 @@
   --review: #e07000;
   --brand-flip: #ff4d2e;
   --brand-english: #00b894;
-  --group-level-bg: #ffe7df;
-  --group-level-border: #ff4d2e;
-  --group-level-label: #d62828;
+  --group-level-bg: #ffe6f3;
+  --group-level-border: #ff5aab;
+  --group-level-label: #e91e8c;
   --group-cat-bg: #dcfff6;
   --group-cat-border: #00b894;
   --group-cat-label: #00856a;
   --group-status-bg: #fff0c2;
   --group-status-border: #ff9f1c;
   --group-status-label: #e07000;
+  /* 純色寄り（ピンク赤・アンバー黄を避ける） */
+  --select-active: #ff0000;
+  --progress-fill: #ffff00;
   --font: "Noto Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN",
     "Yu Gothic", YuGothic, Meiryo, sans-serif;
   /* ブランドロゴのみ丸みフォント。本文・タブ・英単語は潰れない定番ゴシック */
@@ -117,6 +120,8 @@ body {
 }
 
 .filter-group-status {
+  width: fit-content;
+  max-width: 100%;
   background: var(--group-status-bg);
   border-color: var(--group-status-border);
 }
@@ -127,31 +132,19 @@ body {
 
 .level-tabs,
 .cat-tabs,
-.filter-tabs {
+.filter-checks {
   display: flex;
-  gap: 5px;
+  gap: 8px;
 }
 
-.level-tab,
-.cat-tab,
-.filter-tab {
-  flex: 1;
-  min-height: 40px;
-  border: 1px solid rgba(58, 46, 36, 0.16);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.72);
-  color: var(--text);
-  font-size: 0.95rem;
-  font-weight: 800;
-  letter-spacing: 0.01em;
-  cursor: pointer;
-  -webkit-user-select: none;
-  user-select: none;
-  padding: 0 2px;
+.filter-checks {
+  justify-content: flex-start;
+  flex-wrap: wrap;
 }
 
 .level-tab,
 .cat-tab {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -159,6 +152,26 @@ body {
   gap: 2px;
   min-height: 52px;
   line-height: 1.1;
+  border: 2px solid rgba(36, 48, 56, 0.14);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  padding: 4px 2px;
+  /* 進捗グラデ: 0%白 → 100%黄（オレンジ寄りを避ける） */
+  --progress: 0%;
+  background-color: #fff;
+  background-image: linear-gradient(
+    90deg,
+    var(--progress-fill) 0%,
+    var(--progress-fill) var(--progress),
+    #ffffff var(--progress),
+    #ffffff 100%
+  );
 }
 
 .level-tab {
@@ -174,35 +187,67 @@ body {
 
 .tab-title {
   display: block;
+  position: relative;
+  z-index: 1;
 }
 
 .tab-count {
   display: block;
+  position: relative;
+  z-index: 1;
   font-family: var(--font-en);
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0;
-  opacity: 0.78;
-}
-
-.filter-tab {
-  font-size: 1rem;
-  min-height: 44px;
+  opacity: 0.8;
 }
 
 .level-tab.is-active,
-.cat-tab.is-active,
-.filter-tab.is-active {
-  background: #3a2e24;
-  border-color: #3a2e24;
-  color: #fff;
+.cat-tab.is-active {
+  /* 外向きリングはやめて隣と干渉しない。純赤の太枠＋内側白 */
+  border-width: 5px;
+  border-color: var(--select-active);
+  box-shadow: inset 0 0 0 2px #ffffff;
+  z-index: 1;
 }
 
 .level-tab:focus-visible,
-.cat-tab:focus-visible,
-.filter-tab:focus-visible {
+.cat-tab:focus-visible {
   outline: 2px solid #e8c48a;
   outline-offset: 2px;
+}
+
+.status-check {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 2px solid rgba(36, 48, 56, 0.14);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.status-check.is-on {
+  border-color: var(--group-status-border);
+  background: #fff6d8;
+  box-shadow: 0 0 0 2px rgba(255, 159, 28, 0.18);
+}
+
+.status-check input {
+  width: 1.15rem;
+  height: 1.15rem;
+  margin: 0;
+  accent-color: var(--group-status-label);
+  cursor: pointer;
 }
 
 .app-main {
