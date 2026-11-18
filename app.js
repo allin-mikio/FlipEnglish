@@ -4,10 +4,13 @@
   var CSV_URL = "data/cards.csv";
   var AUTO_BACK_MS = 3000;
   var LEVELS = ["A1", "A2", "B1", "B2"];
+  var STATUS_UNREAD = "unread";
+  var STATUS_LEARNED = "learned";
+  var STATUS_REVIEW = "review";
   var FILTERS = [
     { id: "all", label: "すべて" },
-    { id: "off", label: "Offのみ" },
-    { id: "on", label: "Onのみ" },
+    { id: "unread", label: "未読" },
+    { id: "review", label: "要復習" },
   ];
   var CATS = [
     { id: "all", label: "全部" },
@@ -19,7 +22,9 @@
   ];
   var BAND_PAD_Y = 24;
   var OVERSCAN = 10;
-  var STORAGE_KEY = "flipenglish.checked.v1";
+  var STORAGE_KEY = "flipenglish.status.v1";
+  var LEGACY_CHECKED_KEY = "flipenglish.checked.v1";
+  var LONG_PRESS_MS = 550;
 
   var listEl = document.getElementById("card-list");
   var tabsEl = document.getElementById("level-tabs");
@@ -36,7 +41,7 @@
   var activeLevel = "A1";
   var activeCat = "all";
   var activeFilter = "all";
-  var checkedMap = loadCheckedMap();
+  var statusMap = loadStatusMap();
   var baseH = 56;
   var gapH = 8;
   var scrollRaf = 0;
@@ -58,34 +63,56 @@
     return card.cefr + "::" + card.word;
   }
 
-  function loadCheckedMap() {
+  function loadStatusMap() {
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return {};
-      var parsed = JSON.parse(raw);
-      return parsed && typeof parsed === "object" ? parsed : {};
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        return parsed && typeof parsed === "object" ? parsed : {};
+      }
     } catch (err) {
+      /* fall through to legacy */
+    }
+
+    // Migrate old On/Off map → learned
+    try {
+      var legacy = localStorage.getItem(LEGACY_CHECKED_KEY);
+      if (!legacy) return {};
+      var oldMap = JSON.parse(legacy);
+      if (!oldMap || typeof oldMap !== "object") return {};
+      var migrated = {};
+      var keys = Object.keys(oldMap);
+      for (var i = 0; i < keys.length; i++) {
+        if (oldMap[keys[i]]) migrated[keys[i]] = STATUS_LEARNED;
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
+      return migrated;
+    } catch (err2) {
       return {};
     }
   }
 
-  function saveCheckedMap() {
+  function saveStatusMap() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(checkedMap));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(statusMap));
     } catch (err) {
       /* ignore */
     }
   }
 
-  function isChecked(card) {
-    return !!checkedMap[cardKey(card)];
+  function getStatus(card) {
+    return statusMap[cardKey(card)] || STATUS_UNREAD;
   }
 
-  function setCheckedState(card, checked) {
+  function setStatusState(card, status) {
     var key = cardKey(card);
-    if (checked) checkedMap[key] = 1;
-    else delete checkedMap[key];
-    saveCheckedMap();
+    if (!status || status === STATUS_UNREAD) delete statusMap[key];
+    else statusMap[key] = status;
+    saveStatusMap();
+  }
+
+  function isLearned(card) {
+    return getStatus(card) === STATUS_LEARNED;
   }
 
   function parseCsvLine(line) {
@@ -170,8 +197,6 @@
     probe.style.left = "-9999px";
     probe.style.top = "0";
     probe.style.width = widthPx + "px";
-    probe.style.webkitLineClamp = "unset";
-    probe.style.lineClamp = "unset";
     probe.style.display = "block";
     probe.style.overflow = "visible";
     probe.textContent = text;
@@ -183,15 +208,22 @@
 
   function matchesFilter(card) {
     if (activeCat !== "all" && card.cat !== activeCat) return false;
-    var on = isChecked(card);
-    if (activeFilter === "off") return !on;
-    if (activeFilter === "on") return on;
+    var st = getStatus(card);
+    if (activeFilter === "unread") return st === STATUS_UNREAD;
+    if (activeFilter === "review") return st === STATUS_REVIEW;
     return true;
   }
 
   function catLabel(id) {
     for (var i = 0; i < CATS.length; i++) {
       if (CATS[i].id === id) return CATS[i].label;
+    }
+    return id;
+  }
+
+  function filterLabel(id) {
+    for (var i = 0; i < FILTERS.length; i++) {
+      if (FILTERS[i].id === id) return FILTERS[i].label;
     }
     return id;
   }
@@ -254,9 +286,28 @@
     lastRangeKey = "";
   }
 
+  function statusClass(status) {
+    if (status === STATUS_LEARNED) return " is-learned";
+    if (status === STATUS_REVIEW) return " is-review";
+    return "";
+  }
+
+  function statusMarkText(status) {
+    if (status === STATUS_LEARNED) return "済";
+    if (status === STATUS_REVIEW) return "要";
+    return "";
+  }
+
+  function statusAria(status) {
+    if (status === STATUS_LEARNED) return "学習済み。タップで要復習、長押しで未読";
+    if (status === STATUS_REVIEW) return "要復習。タップで学習済み、長押しで未読";
+    return "未読。タップで要復習、長押しで未読のまま";
+  }
+
   function createCard(card, index) {
     var root = document.createElement("div");
-    root.className = "card" + (isChecked(card) ? " is-checked" : "");
+    var current = getStatus(card);
+    root.className = "card" + statusClass(current);
     root.dataset.index = String(card.index || "");
     root.dataset.vindex = String(index);
     root.setAttribute("role", "button");
@@ -276,27 +327,24 @@
     word.className = "word";
     word.textContent = card.word;
 
-    var checkCol = document.createElement("div");
-    checkCol.className = "check-col";
+    var statusCol = document.createElement("div");
+    statusCol.className = "status-col";
 
-    var checkWrap = document.createElement("label");
-    checkWrap.className = "check-wrap";
-    checkWrap.title = "チェック";
-
-    var checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.checked = isChecked(card);
-    checkbox.setAttribute("aria-label", card.word + " をチェック");
-    checkWrap.appendChild(checkbox);
+    var markBtn = document.createElement("button");
+    markBtn.type = "button";
+    markBtn.className = "status-mark";
+    markBtn.textContent = statusMarkText(current);
+    markBtn.setAttribute("aria-label", card.word + " " + statusAria(current));
+    markBtn.title = "タップ: 要復習切替 / 長押し: 未読";
 
     var indexEl = document.createElement("span");
     indexEl.className = "card-index";
     indexEl.textContent = String(card.index || "");
 
-    checkCol.appendChild(checkWrap);
-    checkCol.appendChild(indexEl);
+    statusCol.appendChild(markBtn);
+    statusCol.appendChild(indexEl);
     front.appendChild(word);
-    front.appendChild(checkCol);
+    front.appendChild(statusCol);
 
     var back = document.createElement("div");
     back.className = "face face-back";
@@ -312,6 +360,8 @@
     root.appendChild(inner);
 
     var autoTimer = null;
+    var longPressTimer = null;
+    var longPressFired = false;
     var frontH = baseH;
     var textWidth = Math.max(0, listEl.clientWidth - 28);
     var backH = Math.max(frontH, measureJaHeight(card.ja, textWidth || 320) + BAND_PAD_Y);
@@ -323,10 +373,22 @@
       }
     }
 
-    function applyChecked(checked) {
-      setCheckedState(card, checked);
-      checkbox.checked = checked;
-      root.classList.toggle("is-checked", checked);
+    function clearLongPress() {
+      if (longPressTimer !== null) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
+    }
+
+    function applyStatus(status) {
+      setStatusState(card, status);
+      current = status;
+      root.className =
+        "card" +
+        statusClass(status) +
+        (root.classList.contains("is-flipped") ? " is-flipped" : "");
+      markBtn.textContent = statusMarkText(status);
+      markBtn.setAttribute("aria-label", card.word + " " + statusAria(status));
       refreshTabCounts();
       if (!matchesFilter(card)) {
         clearAuto();
@@ -343,7 +405,7 @@
       root.setAttribute("aria-label", card.word + "。タップで訳を見る");
       front.setAttribute("aria-hidden", "false");
       back.setAttribute("aria-hidden", "true");
-      if (fromBack) applyChecked(true);
+      if (fromBack) applyStatus(STATUS_LEARNED);
     }
 
     function showBack() {
@@ -353,7 +415,6 @@
       root.setAttribute("aria-label", card.word + "：" + card.ja + "。タップで戻す");
       front.setAttribute("aria-hidden", "true");
       back.setAttribute("aria-hidden", "false");
-      // 学習を進めるため、フリップと同時に1項目分だけリストを上へ送る
       window.scrollBy({
         top: frontH + gapH,
         left: 0,
@@ -369,33 +430,58 @@
       else showBack();
     }
 
+    function onStatusTap() {
+      if (current === STATUS_REVIEW) applyStatus(STATUS_LEARNED);
+      else applyStatus(STATUS_REVIEW);
+    }
+
     root.addEventListener("click", function (ev) {
-      if (ev.target === checkbox || checkCol.contains(ev.target)) return;
+      if (statusCol.contains(ev.target)) return;
       toggleFlip();
     });
 
     root.addEventListener("keydown", function (ev) {
-      if (ev.target === checkbox) return;
+      if (ev.target === markBtn) return;
       if (ev.key === "Enter" || ev.key === " ") {
         ev.preventDefault();
         toggleFlip();
       }
     });
 
-    checkCol.addEventListener("click", function (ev) {
+    statusCol.addEventListener("click", function (ev) {
       ev.stopPropagation();
     });
 
-    checkbox.addEventListener("click", function (ev) {
+    markBtn.addEventListener("click", function (ev) {
       ev.stopPropagation();
+      if (longPressFired) {
+        longPressFired = false;
+        return;
+      }
+      onStatusTap();
     });
 
-    checkbox.addEventListener("change", function (ev) {
+    markBtn.addEventListener("pointerdown", function (ev) {
       ev.stopPropagation();
-      applyChecked(checkbox.checked);
+      longPressFired = false;
+      clearLongPress();
+      longPressTimer = setTimeout(function () {
+        longPressFired = true;
+        applyStatus(STATUS_UNREAD);
+      }, LONG_PRESS_MS);
     });
 
-    root._teardown = clearAuto;
+    markBtn.addEventListener("pointerup", clearLongPress);
+    markBtn.addEventListener("pointerleave", clearLongPress);
+    markBtn.addEventListener("pointercancel", clearLongPress);
+    markBtn.addEventListener("contextmenu", function (ev) {
+      ev.preventDefault();
+    });
+
+    root._teardown = function () {
+      clearAuto();
+      clearLongPress();
+    };
     return root;
   }
 
@@ -432,7 +518,6 @@
     var range = visibleRange();
     var key = range.start + ":" + range.end + ":" + totalHeight;
     if (!force && key === lastRangeKey) {
-      // Still refresh tops for height changes within same range.
       var existing = Object.keys(mounted);
       for (var e = 0; e < existing.length; e++) {
         var ei = Number(existing[e]);
@@ -485,7 +570,7 @@
     for (var i = 0; i < allCards.length; i++) {
       if (allCards[i].cefr !== target) continue;
       total++;
-      if (isChecked(allCards[i])) on++;
+      if (isLearned(allCards[i])) on++;
     }
     return { total: total, on: on, off: total - on };
   }
@@ -499,7 +584,7 @@
       if (card.cefr !== targetLevel) continue;
       if (catId !== "all" && card.cat !== catId) continue;
       total++;
-      if (isChecked(card)) on++;
+      if (isLearned(card)) on++;
     }
     return { total: total, on: on, off: total - on };
   }
@@ -519,19 +604,17 @@
 
   function updateStatusCount() {
     var stats = countLevelStats();
-    var filterLabel =
-      activeFilter === "off" ? "Offのみ" : activeFilter === "on" ? "Onのみ" : "チェック全部";
     setStatus(
       activeLevel +
         " · " +
         catLabel(activeCat) +
         " · " +
-        filterLabel +
+        filterLabel(activeFilter) +
         " " +
         viewCards.length +
         " / 全" +
         stats.total +
-        "（On " +
+        "（学習済 " +
         stats.on +
         "）"
     );

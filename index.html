@@ -5,14 +5,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <title>FlipEnglish</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Noto+Sans+JP:wght@500;700;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header class="app-header">
-    <h1>FlipEnglish</h1>
-    <div id="level-tabs" class="level-tabs" role="tablist" aria-label="CEFR level"></div>
-    <div id="cat-tabs" class="cat-tabs" role="tablist" aria-label="カテゴリ"></div>
-    <div id="filter-tabs" class="filter-tabs" role="tablist" aria-label="チェックフィルター"></div>
+    <h1 class="brand" aria-label="FlipEnglish">
+      <span class="brand-flip">Flip</span><span class="brand-english">English</span>
+    </h1>
+
+    <fieldset class="filter-group filter-group-level">
+      <legend class="filter-group-label">レベル</legend>
+      <div id="level-tabs" class="level-tabs" role="tablist" aria-label="CEFR level"></div>
+    </fieldset>
+
+    <fieldset class="filter-group filter-group-cat">
+      <legend class="filter-group-label">カテゴリ</legend>
+      <div id="cat-tabs" class="cat-tabs" role="tablist" aria-label="カテゴリ"></div>
+    </fieldset>
+
+    <fieldset class="filter-group filter-group-status">
+      <legend class="filter-group-label">状態</legend>
+      <div id="filter-tabs" class="filter-tabs" role="tablist" aria-label="学習状態"></div>
+    </fieldset>
   </header>
 
   <main class="app-main">
