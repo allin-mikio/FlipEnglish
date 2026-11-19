@@ -303,6 +303,7 @@ def main() -> int:
                 continue
 
             ja = format_ja(raw_ja or "")
+            pos = (row.get("pos") or "").strip()
             ex = examples.get((normalize_word(headword.split("/")[0]), cefr), {})
             ph = phonetics.get(headword) or phonetics.get(
                 headword.split("/")[0].strip(), {}
@@ -317,6 +318,7 @@ def main() -> int:
                     "cefr": cefr,
                     "cat": cat,
                     "theme": theme,
+                    "pos": pos,
                     "example_en": ex.get("example_en", ""),
                     "example_ja": ex.get("example_ja", ""),
                     "ipa": ph.get("ipa", ""),
@@ -339,6 +341,7 @@ def main() -> int:
                 "cefr",
                 "cat",
                 "theme",
+                "pos",
                 "example_en",
                 "example_ja",
                 "ipa",

@@ -46,7 +46,7 @@
     { id: "hobby", label: "趣味" },
     { id: "other", label: "その他" },
   ];
-  var BAND_PAD_Y = 28;
+  var BAND_PAD_Y = 30;
   var OVERSCAN = 10;
   var STORAGE_KEY = "flipenglish.status.v1";
   var LEGACY_CHECKED_KEY = "flipenglish.checked.v1";
@@ -75,7 +75,7 @@
   var filterUnread = false;
   var filterReview = false;
   var statusMap = loadStatusMap();
-  var baseH = 118;
+  var baseH = 76;
   var gapH = 8;
   var scrollRaf = 0;
   var lastRangeKey = "";
@@ -204,6 +204,7 @@
       var ja = col(cols, "ja");
       var cefr = col(cols, "cefr") || "A1";
       var cat = col(cols, "cat") || "other";
+      var pos = col(cols, "pos");
       var exampleEn = col(cols, "example_en");
       var exampleJa = col(cols, "example_ja");
       var ipa = col(cols, "ipa");
@@ -214,6 +215,7 @@
         ja: ja,
         cefr: cefr,
         cat: cat,
+        pos: pos,
         exampleEn: exampleEn,
         exampleJa: exampleJa,
         ipa: ipa,
@@ -230,8 +232,8 @@
   }
 
   function refreshMetrics() {
-    baseH = cssPx("--band-h", 118);
-    gapH = cssPx("--card-gap", 12);
+    baseH = cssPx("--band-h", 76);
+    gapH = cssPx("--card-gap", 8);
   }
 
   function measureClassHeight(className, text, widthPx) {
@@ -254,6 +256,29 @@
 
   function measureJaHeight(text, widthPx) {
     return measureClassHeight("ja", text, widthPx);
+  }
+
+  var POS_LABEL = {
+    noun: "名",
+    verb: "動",
+    adjective: "形",
+    adverb: "副",
+    pronoun: "代",
+    preposition: "前",
+    conjunction: "接",
+    determiner: "限",
+    number: "数",
+    "modal auxiliary": "助",
+    "be-verb": "動",
+    "do-verb": "動",
+    "have-verb": "動",
+    interjection: "感",
+    "infinitive-to": "to",
+  };
+
+  function posLabel(pos) {
+    if (!pos) return "";
+    return POS_LABEL[pos] || pos;
   }
 
   var speakAudio = null;
@@ -456,6 +481,14 @@
     backWord.className = "back-word";
     backWord.textContent = card.word;
     backWordRow.appendChild(backWord);
+
+    var posText = posLabel(card.pos);
+    if (posText) {
+      var backPos = document.createElement("span");
+      backPos.className = "back-pos";
+      backPos.textContent = posText;
+      backWordRow.appendChild(backPos);
+    }
 
     if (card.ipa) {
       var backIpa = document.createElement("span");
