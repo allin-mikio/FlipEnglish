@@ -75,7 +75,7 @@
   var filterUnread = false;
   var filterReview = false;
   var statusMap = loadStatusMap();
-  var baseH = 102;
+  var baseH = 118;
   var gapH = 8;
   var scrollRaf = 0;
   var lastRangeKey = "";
@@ -230,8 +230,8 @@
   }
 
   function refreshMetrics() {
-    baseH = cssPx("--band-h", 102);
-    gapH = cssPx("--card-gap", 10);
+    baseH = cssPx("--band-h", 118);
+    gapH = cssPx("--card-gap", 12);
   }
 
   function measureClassHeight(className, text, widthPx) {
