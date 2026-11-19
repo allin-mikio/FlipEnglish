@@ -46,7 +46,7 @@
     { id: "hobby", label: "趣味" },
     { id: "other", label: "その他" },
   ];
-  var BAND_PAD_Y = 24;
+  var BAND_PAD_Y = 28;
   var OVERSCAN = 10;
   var STORAGE_KEY = "flipenglish.status.v1";
   var LEGACY_CHECKED_KEY = "flipenglish.checked.v1";
@@ -75,7 +75,7 @@
   var filterUnread = false;
   var filterReview = false;
   var statusMap = loadStatusMap();
-  var baseH = 56;
+  var baseH = 102;
   var gapH = 8;
   var scrollRaf = 0;
   var lastRangeKey = "";
@@ -230,8 +230,8 @@
   }
 
   function refreshMetrics() {
-    baseH = cssPx("--band-h", 56);
-    gapH = cssPx("--card-gap", 8);
+    baseH = cssPx("--band-h", 102);
+    gapH = cssPx("--card-gap", 10);
   }
 
   function measureClassHeight(className, text, widthPx) {
