@@ -334,26 +334,77 @@ body {
   align-items: stretch;
   justify-content: center;
   gap: 4px;
-  padding-top: 24px;
+  padding-top: 28px;
+}
+
+.back-word-row {
+  position: absolute;
+  top: 4px;
+  left: 8px;
+  right: 8px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  pointer-events: none;
 }
 
 .back-word {
-  position: absolute;
-  top: 5px;
-  left: 10px;
-  z-index: 1;
-  max-width: calc(100% - 20px);
+  flex: 0 1 auto;
+  min-width: 0;
   font-family: var(--font-en);
   font-size: 0.95rem;
   font-weight: 800;
   line-height: 1;
   letter-spacing: 0.01em;
   color: #ffe14a;
-  opacity: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  pointer-events: none;
+}
+
+.back-ipa {
+  flex: 0 1 auto;
+  min-width: 0;
+  font-family: var(--font-en);
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.82);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card:not(.is-learned):not(.is-review) .back-ipa {
+  color: rgba(36, 48, 56, 0.7);
+}
+
+.speak-btn {
+  pointer-events: auto;
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 2px 7px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffe14a;
+  font-family: var(--font-en);
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.card:not(.is-learned):not(.is-review) .speak-btn {
+  border-color: rgba(36, 48, 56, 0.28);
+  background: rgba(36, 48, 56, 0.06);
+  color: #c9a200;
+}
+
+.speak-btn:active {
+  transform: translateY(1px);
 }
 
 .card.is-learned .face {

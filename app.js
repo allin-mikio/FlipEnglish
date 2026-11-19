@@ -206,6 +206,8 @@
       var cat = col(cols, "cat") || "other";
       var exampleEn = col(cols, "example_en");
       var exampleJa = col(cols, "example_ja");
+      var ipa = col(cols, "ipa");
+      var audio = col(cols, "audio");
       if (!word || !ja) continue;
       cards.push({
         word: word,
@@ -214,6 +216,8 @@
         cat: cat,
         exampleEn: exampleEn,
         exampleJa: exampleJa,
+        ipa: ipa,
+        audio: audio,
       });
     }
     return cards;
@@ -250,6 +254,44 @@
 
   function measureJaHeight(text, widthPx) {
     return measureClassHeight("ja", text, widthPx);
+  }
+
+  var speakAudio = null;
+
+  function speakWord(word, audioUrl) {
+    var text = (word || "").split("/")[0].trim();
+    if (!text) return;
+
+    if (speakAudio) {
+      try {
+        speakAudio.pause();
+      } catch (err) {
+        /* ignore */
+      }
+      speakAudio = null;
+    }
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+
+    if (audioUrl) {
+      try {
+        speakAudio = new Audio(audioUrl);
+        speakAudio.play().catch(function () {
+          speakWithWebSpeech(text);
+        });
+        return;
+      } catch (err2) {
+        /* fall through */
+      }
+    }
+    speakWithWebSpeech(text);
+  }
+
+  function speakWithWebSpeech(text) {
+    if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
+    var utter = new SpeechSynthesisUtterance(text);
+    utter.lang = "en-US";
+    utter.rate = 0.92;
+    window.speechSynthesis.speak(utter);
   }
 
   function matchesFilter(card) {
@@ -407,14 +449,33 @@
     back.className = "face face-back";
     back.setAttribute("aria-hidden", "true");
 
-    var backWord = document.createElement("div");
+    var backWordRow = document.createElement("div");
+    backWordRow.className = "back-word-row";
+
+    var backWord = document.createElement("span");
     backWord.className = "back-word";
     backWord.textContent = card.word;
+    backWordRow.appendChild(backWord);
+
+    if (card.ipa) {
+      var backIpa = document.createElement("span");
+      backIpa.className = "back-ipa";
+      backIpa.textContent = card.ipa;
+      backWordRow.appendChild(backIpa);
+    }
+
+    var speakBtn = document.createElement("button");
+    speakBtn.type = "button";
+    speakBtn.className = "speak-btn";
+    speakBtn.textContent = "▶";
+    speakBtn.title = "発音を聞く";
+    speakBtn.setAttribute("aria-label", card.word + " の発音を聞く");
+    backWordRow.appendChild(speakBtn);
 
     var ja = document.createElement("div");
     ja.className = "ja";
     ja.textContent = card.ja;
-    back.appendChild(backWord);
+    back.appendChild(backWordRow);
     back.appendChild(ja);
 
     var hasExample = !!(card.exampleEn && card.exampleJa);
@@ -558,6 +619,7 @@
 
     root.addEventListener("click", function (ev) {
       if (statusCol.contains(ev.target)) return;
+      if (speakBtn.contains(ev.target)) return;
       if (exampleToggle && exampleToggle.contains(ev.target)) return;
       if (exampleBody && !exampleBody.hidden && exampleBody.contains(ev.target)) {
         return;
@@ -566,7 +628,7 @@
     });
 
     root.addEventListener("keydown", function (ev) {
-      if (ev.target === markBtn) return;
+      if (ev.target === markBtn || ev.target === speakBtn) return;
       if (exampleToggle && ev.target === exampleToggle) return;
       if (ev.key === "Enter" || ev.key === " ") {
         ev.preventDefault();
@@ -576,6 +638,11 @@
 
     statusCol.addEventListener("click", function (ev) {
       ev.stopPropagation();
+    });
+
+    speakBtn.addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      speakWord(card.word, card.audio || "");
     });
 
     if (exampleToggle) {

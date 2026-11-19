@@ -15,6 +15,7 @@ EJDICT_DIR = ROOT / "vendor" / "EJDict-master" / "src"
 OUT_MATCHED = ROOT / "data" / "cards.csv"
 OUT_UNMATCHED = ROOT / "data" / "unmatched.csv"
 EXAMPLES_PATH = ROOT / "data" / "examples.csv"
+PHONETICS_PATH = ROOT / "data" / "phonetics.csv"
 LEVELS = ("A1", "A2", "B1", "B2")
 CAT_OTHER = "other"
 CAT_LABELS = {
@@ -190,6 +191,23 @@ def load_examples(path: Path) -> dict[tuple[str, str], dict[str, str]]:
     return out
 
 
+def load_phonetics(path: Path) -> dict[str, dict[str, str]]:
+    """Optional IPA/audio keyed by exact card headword."""
+    out: dict[str, dict[str, str]] = {}
+    if not path.exists():
+        return out
+    with path.open(encoding="utf-8-sig", newline="") as f:
+        for row in csv.DictReader(f):
+            word = (row.get("word") or "").strip()
+            if not word:
+                continue
+            out[word] = {
+                "ipa": (row.get("ipa") or "").strip(),
+                "audio": (row.get("audio") or "").strip(),
+            }
+    return out
+
+
 def load_ejdict(src_dir: Path) -> dict[str, str]:
     mapping: dict[str, str] = {}
     priority: dict[str, int] = {}
@@ -231,8 +249,10 @@ def main() -> int:
 
     ejdict = load_ejdict(EJDICT_DIR)
     examples = load_examples(EXAMPLES_PATH)
+    phonetics = load_phonetics(PHONETICS_PATH)
     print(f"EJDICT entries indexed: {len(ejdict)}")
     print(f"Curated examples: {len(examples)}")
+    print(f"Phonetics: {len(phonetics)}")
 
     matched_rows: list[dict[str, str]] = []
     unmatched_rows: list[dict[str, str]] = []
@@ -284,6 +304,9 @@ def main() -> int:
 
             ja = format_ja(raw_ja or "")
             ex = examples.get((normalize_word(headword.split("/")[0]), cefr), {})
+            ph = phonetics.get(headword) or phonetics.get(
+                headword.split("/")[0].strip(), {}
+            )
             by_level[cefr] += 1
             by_cat[cat] += 1
             by_level_cat[(cefr, cat)] += 1
@@ -296,6 +319,8 @@ def main() -> int:
                     "theme": theme,
                     "example_en": ex.get("example_en", ""),
                     "example_ja": ex.get("example_ja", ""),
+                    "ipa": ph.get("ipa", ""),
+                    "audio": ph.get("audio", ""),
                 }
             )
 
@@ -316,6 +341,8 @@ def main() -> int:
                 "theme",
                 "example_en",
                 "example_ja",
+                "ipa",
+                "audio",
             ],
         )
         writer.writeheader()
