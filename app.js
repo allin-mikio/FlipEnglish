@@ -258,6 +258,22 @@
     return measureClassHeight("ja", text, widthPx);
   }
 
+  function measureClampedJaHeight(text, widthPx) {
+    var probe = document.createElement("div");
+    probe.className = "ja is-clamped";
+    probe.style.position = "absolute";
+    probe.style.visibility = "hidden";
+    probe.style.pointerEvents = "none";
+    probe.style.left = "-9999px";
+    probe.style.top = "0";
+    probe.style.width = widthPx + "px";
+    probe.textContent = text;
+    document.body.appendChild(probe);
+    var h = Math.ceil(probe.getBoundingClientRect().height || probe.scrollHeight);
+    document.body.removeChild(probe);
+    return h;
+  }
+
   var POS_LABEL = {
     noun: "名",
     verb: "動",
@@ -505,21 +521,28 @@
     speakBtn.setAttribute("aria-label", card.word + " の発音を聞く");
     backWordRow.appendChild(speakBtn);
 
-    var ja = document.createElement("div");
-    ja.className = "ja";
-    ja.textContent = card.ja;
-    back.appendChild(backWordRow);
-    back.appendChild(ja);
-
     var hasExample = !!(card.exampleEn && card.exampleJa);
     var exampleOpen = hasExample;
     var exampleToggle = null;
     var exampleBody = null;
+    var exampleBlock = null;
     var EXAMPLE_TOGGLE_H = 22;
     var EXAMPLE_GAP = 4;
+    var JA_MORE_H = 0;
+
+    var jaBlock = document.createElement("div");
+    jaBlock.className = "ja-block";
+
+    var ja = document.createElement("div");
+    ja.className = "ja";
+    ja.textContent = card.ja;
+    jaBlock.appendChild(ja);
+
+    var jaMore = null;
+    var WORD_ROW_H = 30;
 
     if (hasExample) {
-      var exampleBlock = document.createElement("div");
+      exampleBlock = document.createElement("div");
       exampleBlock.className = "example-block";
 
       exampleToggle = document.createElement("button");
@@ -547,6 +570,10 @@
       back.appendChild(exampleBlock);
     }
 
+    // 試し: 例文 → 白線 → 訳 → 単語/品詞/音声（一番下）
+    back.appendChild(jaBlock);
+    back.appendChild(backWordRow);
+
     inner.appendChild(front);
     inner.appendChild(back);
     root.appendChild(inner);
@@ -555,7 +582,19 @@
     var longPressFired = false;
     var frontH = baseH;
     var textWidth = Math.max(0, listEl.clientWidth - 28);
-    var jaH = measureJaHeight(card.ja, textWidth || 320);
+    var jaFullH = measureJaHeight(card.ja, textWidth || 320);
+    var jaClampH = measureClampedJaHeight(card.ja, textWidth || 320);
+    var jaNeedsMore = jaFullH > jaClampH + 2;
+    var jaExpanded = false;
+    if (jaNeedsMore) {
+      ja.classList.add("is-clamped");
+      jaMore = document.createElement("button");
+      jaMore.type = "button";
+      jaMore.className = "ja-more";
+      jaMore.textContent = "続き";
+      jaMore.setAttribute("aria-expanded", "false");
+      jaBlock.appendChild(jaMore);
+    }
     var exampleClosedExtra = hasExample ? EXAMPLE_TOGGLE_H + EXAMPLE_GAP : 0;
     var exampleOpenExtra = 0;
     if (hasExample) {
@@ -567,12 +606,38 @@
         measureClassHeight("example-ja", card.exampleJa, textWidth || 320) +
         EXAMPLE_GAP;
     }
-    var backHClosed = Math.max(frontH, jaH + BAND_PAD_Y + 16 + exampleClosedExtra);
-    var backHOpen = Math.max(frontH, jaH + BAND_PAD_Y + 16 + exampleOpenExtra);
-    var backH = exampleOpen ? backHOpen : backHClosed;
+
+    function currentJaH() {
+      if (!jaNeedsMore || jaExpanded) return jaFullH;
+      return jaClampH;
+    }
 
     function currentBackH() {
-      return exampleOpen ? backHOpen : backHClosed;
+      var ex = exampleOpen ? exampleOpenExtra : exampleClosedExtra;
+      var more = jaNeedsMore ? JA_MORE_H : 0;
+      return Math.max(
+        frontH,
+        currentJaH() + WORD_ROW_H + BAND_PAD_Y + ex + more
+      );
+    }
+
+    var backH = currentBackH();
+
+    function refreshBackHeight() {
+      backH = currentBackH();
+      if (root.classList.contains("is-flipped")) {
+        setItemHeight(index, backH, true);
+      }
+    }
+
+    function setJaExpanded(open) {
+      if (!jaNeedsMore || !jaMore) return;
+      jaExpanded = open;
+      ja.classList.toggle("is-clamped", !open);
+      jaBlock.classList.toggle("is-expanded", open);
+      jaMore.textContent = open ? "閉じる" : "続き";
+      jaMore.setAttribute("aria-expanded", open ? "true" : "false");
+      refreshBackHeight();
     }
 
     function setExampleOpen(open) {
@@ -581,10 +646,7 @@
       exampleBody.hidden = !open;
       exampleToggle.textContent = open ? "▼ 例文" : "▶ 例文";
       exampleToggle.setAttribute("aria-expanded", open ? "true" : "false");
-      backH = currentBackH();
-      if (root.classList.contains("is-flipped")) {
-        setItemHeight(index, backH, true);
-      }
+      refreshBackHeight();
     }
 
     function clearLongPress() {
@@ -612,6 +674,8 @@
     }
 
     function showFront() {
+      setJaExpanded(false);
+      if (hasExample) setExampleOpen(true);
       root.classList.remove("is-flipped");
       setItemHeight(index, frontH, true);
       root.setAttribute("aria-label", card.word + "。タップで訳を見る");
@@ -622,6 +686,7 @@
     function showBack() {
       var wasUnread = current === STATUS_UNREAD;
       if (hasExample) setExampleOpen(true);
+      setJaExpanded(false);
       backH = currentBackH();
       root.classList.add("is-flipped");
       setItemHeight(index, backH, true);
@@ -653,6 +718,7 @@
     root.addEventListener("click", function (ev) {
       if (statusCol.contains(ev.target)) return;
       if (speakBtn.contains(ev.target)) return;
+      if (jaMore && jaMore.contains(ev.target)) return;
       if (exampleToggle && exampleToggle.contains(ev.target)) return;
       if (exampleBody && !exampleBody.hidden && exampleBody.contains(ev.target)) {
         return;
@@ -662,6 +728,7 @@
 
     root.addEventListener("keydown", function (ev) {
       if (ev.target === markBtn || ev.target === speakBtn) return;
+      if (jaMore && ev.target === jaMore) return;
       if (exampleToggle && ev.target === exampleToggle) return;
       if (ev.key === "Enter" || ev.key === " ") {
         ev.preventDefault();
@@ -678,6 +745,13 @@
       speakWord(card.word, card.audio || "");
     });
 
+    if (jaMore) {
+      jaMore.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        setJaExpanded(!jaExpanded);
+      });
+    }
+
     if (exampleToggle) {
       exampleToggle.addEventListener("click", function (ev) {
         ev.stopPropagation();
@@ -687,6 +761,8 @@
 
     markBtn.addEventListener("click", function (ev) {
       ev.stopPropagation();
+      // 裏面ではチェック操作しない（続きなどと重なるため）
+      if (root.classList.contains("is-flipped")) return;
       if (longPressFired) {
         longPressFired = false;
         return;
@@ -696,6 +772,7 @@
 
     markBtn.addEventListener("pointerdown", function (ev) {
       ev.stopPropagation();
+      if (root.classList.contains("is-flipped")) return;
       longPressFired = false;
       clearLongPress();
       longPressTimer = setTimeout(function () {
