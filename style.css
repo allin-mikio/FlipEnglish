@@ -416,9 +416,14 @@ body {
 }
 
 .level-tabs,
-.cat-tabs,
 .filter-checks {
   display: flex;
+  gap: 8px;
+}
+
+.cat-tabs {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
 }
 
