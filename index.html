@@ -12,9 +12,12 @@
 </head>
 <body>
   <header class="app-header">
-    <h1 class="brand" aria-label="FlipEnglish">
-      <span class="brand-flip">Flip</span><span class="brand-english">English</span>
-    </h1>
+    <div class="brand-row">
+      <h1 class="brand" aria-label="FlipEnglish">
+        <span class="brand-flip">Flip</span><span class="brand-english">English</span>
+      </h1>
+      <button type="button" id="menu-btn" class="menu-btn" aria-label="メニュー" aria-haspopup="dialog" aria-expanded="false" aria-controls="app-menu">⋯</button>
+    </div>
 
     <fieldset class="filter-group filter-group-level">
       <legend class="filter-group-label">Level</legend>
@@ -41,6 +44,43 @@
   <div class="nav-fabs" aria-label="ページ移動">
     <button type="button" id="unread-btn" class="nav-fab" hidden aria-label="一番近い未読へ">↓未読</button>
     <button type="button" id="top-btn" class="nav-fab" hidden aria-label="ページ先頭へ">↑ Top</button>
+  </div>
+
+  <div id="menu-overlay" class="menu-overlay" hidden>
+    <button type="button" class="menu-backdrop" aria-label="メニューを閉じる"></button>
+    <div id="app-menu" class="menu-sheet" role="dialog" aria-modal="true" aria-labelledby="menu-title">
+      <div class="menu-handle" aria-hidden="true"></div>
+      <h2 id="menu-title" class="menu-title">メニュー</h2>
+      <ul class="menu-list">
+        <li>
+          <button type="button" class="menu-item" data-menu="search" disabled>
+            <span class="menu-item-icon" aria-hidden="true">⌕</span>
+            <span class="menu-item-text">
+              <span class="menu-item-label">検索</span>
+              <span class="menu-item-sub">単語・訳で探す</span>
+            </span>
+          </button>
+        </li>
+        <li>
+          <button type="button" class="menu-item" data-menu="reset" disabled>
+            <span class="menu-item-icon" aria-hidden="true">↺</span>
+            <span class="menu-item-text">
+              <span class="menu-item-label">学習状態をリセット</span>
+              <span class="menu-item-sub">すべて未読に戻す</span>
+            </span>
+          </button>
+        </li>
+        <li>
+          <button type="button" class="menu-item" data-menu="help" disabled>
+            <span class="menu-item-icon" aria-hidden="true">?</span>
+            <span class="menu-item-text">
+              <span class="menu-item-label">使い方</span>
+              <span class="menu-item-sub">操作の説明</span>
+            </span>
+          </button>
+        </li>
+      </ul>
+    </div>
   </div>
 
   <script src="app.js"></script>

@@ -60,6 +60,8 @@
   var toastEl = document.getElementById("level-toast");
   var topBtn = document.getElementById("top-btn");
   var unreadBtn = document.getElementById("unread-btn");
+  var menuBtn = document.getElementById("menu-btn");
+  var menuOverlay = document.getElementById("menu-overlay");
   var toastTimer = null;
   var TOP_SHOW_Y = 240;
 
@@ -1172,6 +1174,42 @@
     paintVirtual(true);
   }
 
+  function isMenuOpen() {
+    return !!(menuOverlay && !menuOverlay.hidden);
+  }
+
+  function openMenu() {
+    if (!menuOverlay || !menuBtn) return;
+    menuOverlay.hidden = false;
+    menuBtn.setAttribute("aria-expanded", "true");
+    document.documentElement.style.overflow = "hidden";
+  }
+
+  function closeMenu() {
+    if (!menuOverlay || !menuBtn) return;
+    menuOverlay.hidden = true;
+    menuBtn.setAttribute("aria-expanded", "false");
+    document.documentElement.style.overflow = "";
+  }
+
+  function setupMenu() {
+    if (!menuBtn || !menuOverlay) return;
+    menuBtn.addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      if (isMenuOpen()) closeMenu();
+      else openMenu();
+    });
+    menuOverlay.addEventListener("click", function (ev) {
+      if (ev.target.classList.contains("menu-backdrop")) closeMenu();
+    });
+    document.addEventListener("keydown", function (ev) {
+      if (ev.key === "Escape" && isMenuOpen()) {
+        ev.preventDefault();
+        closeMenu();
+      }
+    });
+  }
+
   function boot() {
     setStatus("読み込み中…");
     window.addEventListener("scroll", onScrollOrResize, { passive: true });
@@ -1184,6 +1222,7 @@
     if (unreadBtn) {
       unreadBtn.addEventListener("click", jumpToNearestUnread);
     }
+    setupMenu();
     updateNavBtns();
     document.addEventListener(
       "pointerdown",
