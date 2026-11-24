@@ -16,7 +16,30 @@
       <h1 class="brand" aria-label="FlipEnglish">
         <span class="brand-flip">Flip</span><span class="brand-english">English</span>
       </h1>
-      <button type="button" id="menu-btn" class="menu-btn" aria-label="メニュー" aria-haspopup="dialog" aria-expanded="false" aria-controls="app-menu">⋯</button>
+      <button
+        type="button"
+        id="help-btn"
+        class="help-btn"
+        aria-label="Manual"
+        aria-haspopup="dialog"
+        aria-expanded="false"
+        aria-controls="help-sheet"
+      >?</button>
+    </div>
+
+    <div class="search-bar">
+      <label class="search-label" for="search-input">検索</label>
+      <input
+        id="search-input"
+        class="search-input"
+        type="search"
+        enterkeyhint="search"
+        autocomplete="off"
+        autocorrect="off"
+        spellcheck="false"
+        placeholder="単語・訳で検索"
+      />
+      <button type="button" id="search-clear" class="search-clear" hidden aria-label="検索をクリア">×</button>
     </div>
 
     <fieldset class="filter-group filter-group-level">
@@ -41,45 +64,40 @@
   </main>
 
   <div id="level-toast" class="level-toast" hidden role="status" aria-live="polite"></div>
+  <div id="app-toast" class="app-toast" hidden role="status" aria-live="polite"></div>
   <div class="nav-fabs" aria-label="ページ移動">
     <button type="button" id="unread-btn" class="nav-fab" hidden aria-label="一番近い未読へ">↓未読</button>
     <button type="button" id="top-btn" class="nav-fab" hidden aria-label="ページ先頭へ">↑ Top</button>
   </div>
 
-  <div id="menu-overlay" class="menu-overlay" hidden>
-    <button type="button" class="menu-backdrop" aria-label="メニューを閉じる"></button>
-    <div id="app-menu" class="menu-sheet" role="dialog" aria-modal="true" aria-labelledby="menu-title">
-      <div class="menu-handle" aria-hidden="true"></div>
-      <h2 id="menu-title" class="menu-title">メニュー</h2>
-      <ul class="menu-list">
-        <li>
-          <button type="button" class="menu-item" data-menu="search" disabled>
-            <span class="menu-item-icon" aria-hidden="true">⌕</span>
-            <span class="menu-item-text">
-              <span class="menu-item-label">検索</span>
-              <span class="menu-item-sub">単語・訳で探す</span>
-            </span>
-          </button>
-        </li>
-        <li>
-          <button type="button" class="menu-item" data-menu="reset" disabled>
-            <span class="menu-item-icon" aria-hidden="true">↺</span>
-            <span class="menu-item-text">
-              <span class="menu-item-label">学習状態をリセット</span>
-              <span class="menu-item-sub">すべて未読に戻す</span>
-            </span>
-          </button>
-        </li>
-        <li>
-          <button type="button" class="menu-item" data-menu="help" disabled>
-            <span class="menu-item-icon" aria-hidden="true">?</span>
-            <span class="menu-item-text">
-              <span class="menu-item-label">使い方</span>
-              <span class="menu-item-sub">操作の説明</span>
-            </span>
-          </button>
-        </li>
+  <div id="help-overlay" class="sheet-overlay" hidden>
+    <button type="button" class="sheet-backdrop" data-close="help" aria-label="Manualを閉じる"></button>
+    <div id="help-sheet" class="sheet-panel help-sheet" role="dialog" aria-modal="true" aria-labelledby="help-title">
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <div class="sheet-head">
+        <h2 id="help-title" class="sheet-title">Manual</h2>
+        <button type="button" class="sheet-close" data-close="help" aria-label="閉じる">×</button>
+      </div>
+      <ul class="help-list">
+        <li>チェックを<strong>長押し</strong>で未読に戻す</li>
+        <li>Level / Category を<strong>長押し</strong>すると、その範囲の学習状態を未読に戻せます（確認チェックあり）</li>
       </ul>
+    </div>
+  </div>
+
+  <div id="reset-overlay" class="sheet-overlay reset-overlay" hidden>
+    <button type="button" class="sheet-backdrop" data-close="reset" aria-label="キャンセル"></button>
+    <div id="reset-dialog" class="reset-dialog" role="dialog" aria-modal="true" aria-labelledby="reset-title">
+      <h2 id="reset-title" class="sheet-title">学習状態をリセット</h2>
+      <p id="reset-message" class="reset-message"></p>
+      <label class="reset-check">
+        <input type="checkbox" id="reset-confirm-check" />
+        <span>未読に戻す</span>
+      </label>
+      <div class="reset-actions">
+        <button type="button" id="reset-cancel" class="reset-btn reset-btn-cancel">キャンセル</button>
+        <button type="button" id="reset-ok" class="reset-btn reset-btn-ok" disabled>OK</button>
+      </div>
     </div>
   </div>
 

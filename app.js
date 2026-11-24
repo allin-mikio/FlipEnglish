@@ -60,10 +60,21 @@
   var toastEl = document.getElementById("level-toast");
   var topBtn = document.getElementById("top-btn");
   var unreadBtn = document.getElementById("unread-btn");
-  var menuBtn = document.getElementById("menu-btn");
-  var menuOverlay = document.getElementById("menu-overlay");
+  var helpBtn = document.getElementById("help-btn");
+  var helpOverlay = document.getElementById("help-overlay");
+  var resetOverlay = document.getElementById("reset-overlay");
+  var resetMessageEl = document.getElementById("reset-message");
+  var resetCheckEl = document.getElementById("reset-confirm-check");
+  var resetOkBtn = document.getElementById("reset-ok");
+  var resetCancelBtn = document.getElementById("reset-cancel");
+  var searchInput = document.getElementById("search-input");
+  var searchClearBtn = document.getElementById("search-clear");
+  var appToastEl = document.getElementById("app-toast");
   var toastTimer = null;
+  var appToastTimer = null;
   var TOP_SHOW_Y = 240;
+  var searchQuery = "";
+  var pendingReset = null;
 
   var allCards = [];
   var viewCards = [];
@@ -380,15 +391,70 @@
     }
   }
 
+  function normalizeSearch(text) {
+    return String(text || "")
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function isAsciiQuery(q) {
+    return /^[a-z0-9'’\-\s.\/]+$/i.test(q);
+  }
+
+  function searchableJa(ja) {
+    // 訳中の英語括弧 (characteristic) などに英字検索が引っかからないようにする
+    return normalizeSearch(String(ja || "").replace(/\([^)]*\)/g, " "));
+  }
+
+  function matchesSearch(card) {
+    if (!searchQuery) return true;
+    var q = searchQuery;
+    var word = normalizeSearch(card.word);
+    if (word.indexOf(q) !== -1) return true;
+    // 英字クエリは英単語のみ（辞書訳の英語注記は対象外）
+    if (isAsciiQuery(q)) return false;
+    return searchableJa(card.ja).indexOf(q) !== -1;
+  }
+
+  function isCardInCurrentView(card) {
+    // 検索中は Level / Category / Filter を無視して全件からヒット
+    if (searchQuery) return matchesSearch(card);
+    if (card.cefr !== activeLevel) return false;
+    return matchesFilter(card);
+  }
+
   function cardsForView() {
     var out = [];
     for (var i = 0; i < allCards.length; i++) {
       var card = allCards[i];
-      if (card.cefr !== activeLevel) continue;
-      if (!matchesFilter(card)) continue;
+      if (!isCardInCurrentView(card)) continue;
       out.push(card);
     }
     return out;
+  }
+
+  function activateCardContext(card) {
+    var levelChanged = card.cefr !== activeLevel;
+    var catChanged = card.cat !== activeCat;
+    if (!levelChanged && !catChanged) return;
+    activeLevel = card.cefr;
+    activeCat = card.cat || "all";
+    renderTabs();
+    renderCats();
+    // 検索中はリストを保ち、タブだけ所属位置に合わせる
+    if (!searchQuery) renderList(false);
+  }
+
+  function setSearchQuery(raw) {
+    searchQuery = normalizeSearch(raw);
+    if (searchClearBtn) searchClearBtn.hidden = !searchQuery;
+    renderList(true);
+    if (searchQuery && !viewCards.length) {
+      setStatus("見つかりません", true);
+    } else {
+      updateStatusCount();
+    }
   }
 
   function rebuildGeometry() {
@@ -668,7 +734,7 @@
       markBtn.textContent = statusMarkText(status);
       markBtn.setAttribute("aria-label", card.word + " " + statusAria(status));
       refreshTabCounts();
-      if (!matchesFilter(card)) {
+      if (!isCardInCurrentView(card)) {
         renderList(false);
         return;
       }
@@ -686,6 +752,7 @@
     }
 
     function showBack() {
+      activateCardContext(card);
       var wasUnread = current === STATUS_UNREAD;
       if (hasExample) setExampleOpen(true);
       setJaExpanded(false);
@@ -1064,6 +1131,42 @@
     renderCats();
   }
 
+  function bindLongPress(el, onLongPress) {
+    var timer = null;
+    var fired = false;
+
+    function clearTimer() {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+    }
+
+    el.addEventListener("pointerdown", function (ev) {
+      if (ev.button != null && ev.button !== 0) return;
+      fired = false;
+      clearTimer();
+      timer = setTimeout(function () {
+        fired = true;
+        timer = null;
+        onLongPress();
+      }, LONG_PRESS_MS);
+    });
+    el.addEventListener("pointerup", clearTimer);
+    el.addEventListener("pointerleave", clearTimer);
+    el.addEventListener("pointercancel", clearTimer);
+    el.addEventListener("contextmenu", function (ev) {
+      ev.preventDefault();
+    });
+    return function wasLongPress() {
+      if (fired) {
+        fired = false;
+        return true;
+      }
+      return false;
+    };
+  }
+
   function renderTabs() {
     tabsEl.textContent = "";
     for (var i = 0; i < LEVELS.length; i++) {
@@ -1078,19 +1181,30 @@
       btn.setAttribute("role", "tab");
       btn.setAttribute("aria-selected", level === activeLevel ? "true" : "false");
       btn.dataset.level = level;
+      btn.title = "タップ: 切替 / 長押し: 学習状態リセット";
       fillLevelTab(btn, level, stats.on, stats.total);
-      btn.addEventListener("click", function (ev) {
-        var next = ev.currentTarget.dataset.level;
-        if (!next) return;
-        var changed = next !== activeLevel;
-        activeLevel = next;
-        renderTabs();
-        if (changed) {
-          renderCats();
-          renderList(true);
-        }
-        showLevelToast(next);
-      });
+      (function (levelId, tabBtn) {
+        var wasLongPress = bindLongPress(tabBtn, function () {
+          openResetConfirm({
+            kind: "level",
+            level: levelId,
+            cat: "all",
+          });
+        });
+        tabBtn.addEventListener("click", function (ev) {
+          if (wasLongPress()) return;
+          var next = ev.currentTarget.dataset.level;
+          if (!next) return;
+          var changed = next !== activeLevel;
+          activeLevel = next;
+          renderTabs();
+          if (changed) {
+            renderCats();
+            renderList(true);
+          }
+          showLevelToast(next);
+        });
+      })(level, btn);
       tabsEl.appendChild(btn);
     }
   }
@@ -1106,14 +1220,25 @@
       btn.setAttribute("role", "tab");
       btn.setAttribute("aria-selected", item.id === activeCat ? "true" : "false");
       btn.dataset.cat = item.id;
+      btn.title = "タップ: 切替 / 長押し: 学習状態リセット";
       fillTabButton(btn, item.label, stats.on, stats.total);
-      btn.addEventListener("click", function (ev) {
-        var next = ev.currentTarget.dataset.cat;
-        if (!next || next === activeCat) return;
-        activeCat = next;
-        renderCats();
-        renderList(true);
-      });
+      (function (catId, tabBtn) {
+        var wasLongPress = bindLongPress(tabBtn, function () {
+          openResetConfirm({
+            kind: "cat",
+            level: activeLevel,
+            cat: catId,
+          });
+        });
+        tabBtn.addEventListener("click", function (ev) {
+          if (wasLongPress()) return;
+          var next = ev.currentTarget.dataset.cat;
+          if (!next || next === activeCat) return;
+          activeCat = next;
+          renderCats();
+          renderList(true);
+        });
+      })(item.id, btn);
       catEl.appendChild(btn);
     }
   }
@@ -1174,40 +1299,176 @@
     paintVirtual(true);
   }
 
-  function isMenuOpen() {
-    return !!(menuOverlay && !menuOverlay.hidden);
+  function lockScroll(on) {
+    document.documentElement.style.overflow = on ? "hidden" : "";
   }
 
-  function openMenu() {
-    if (!menuOverlay || !menuBtn) return;
-    menuOverlay.hidden = false;
-    menuBtn.setAttribute("aria-expanded", "true");
-    document.documentElement.style.overflow = "hidden";
+  function isHelpOpen() {
+    return !!(helpOverlay && !helpOverlay.hidden);
   }
 
-  function closeMenu() {
-    if (!menuOverlay || !menuBtn) return;
-    menuOverlay.hidden = true;
-    menuBtn.setAttribute("aria-expanded", "false");
-    document.documentElement.style.overflow = "";
+  function isResetOpen() {
+    return !!(resetOverlay && !resetOverlay.hidden);
   }
 
-  function setupMenu() {
-    if (!menuBtn || !menuOverlay) return;
-    menuBtn.addEventListener("click", function (ev) {
-      ev.stopPropagation();
-      if (isMenuOpen()) closeMenu();
-      else openMenu();
-    });
-    menuOverlay.addEventListener("click", function (ev) {
-      if (ev.target.classList.contains("menu-backdrop")) closeMenu();
-    });
+  function openHelp() {
+    if (!helpOverlay || !helpBtn) return;
+    closeReset();
+    helpOverlay.hidden = false;
+    helpBtn.setAttribute("aria-expanded", "true");
+    lockScroll(true);
+  }
+
+  function closeHelp() {
+    if (!helpOverlay || !helpBtn) return;
+    helpOverlay.hidden = true;
+    helpBtn.setAttribute("aria-expanded", "false");
+    if (!isResetOpen()) lockScroll(false);
+  }
+
+  function resetConfirmLabel(scope) {
+    if (scope.kind === "level") {
+      var info = LEVEL_INFO[scope.level] || { label: "" };
+      return (
+        scope.level +
+        (info.label ? "（" + info.label + "）" : "") +
+        " の学習状態をすべて未読に戻します。"
+      );
+    }
+    var label = catLabel(scope.cat);
+    if (scope.cat === "all") {
+      return scope.level + " の学習状態をすべて未読に戻します。";
+    }
+    return (
+      scope.level + " の「" + label + "」の学習状態を未読に戻します。"
+    );
+  }
+
+  function openResetConfirm(scope) {
+    if (!resetOverlay || !resetMessageEl || !resetCheckEl || !resetOkBtn) return;
+    closeHelp();
+    pendingReset = scope;
+    resetMessageEl.textContent = resetConfirmLabel(scope);
+    resetCheckEl.checked = false;
+    resetOkBtn.disabled = true;
+    resetOverlay.hidden = false;
+    lockScroll(true);
+  }
+
+  function closeReset() {
+    if (!resetOverlay) return;
+    resetOverlay.hidden = true;
+    pendingReset = null;
+    if (resetCheckEl) resetCheckEl.checked = false;
+    if (resetOkBtn) resetOkBtn.disabled = true;
+    if (!isHelpOpen()) lockScroll(false);
+  }
+
+  function countResetTargets(scope) {
+    var n = 0;
+    for (var i = 0; i < allCards.length; i++) {
+      var card = allCards[i];
+      if (card.cefr !== scope.level) continue;
+      if (scope.kind === "cat" && scope.cat !== "all" && card.cat !== scope.cat) {
+        continue;
+      }
+      if (getStatus(card) !== STATUS_UNREAD) n++;
+    }
+    return n;
+  }
+
+  function applyScopedReset(scope) {
+    var cleared = 0;
+    for (var i = 0; i < allCards.length; i++) {
+      var card = allCards[i];
+      if (card.cefr !== scope.level) continue;
+      if (scope.kind === "cat" && scope.cat !== "all" && card.cat !== scope.cat) {
+        continue;
+      }
+      if (getStatus(card) === STATUS_UNREAD) continue;
+      setStatusState(card, STATUS_UNREAD);
+      cleared++;
+    }
+    return cleared;
+  }
+
+  function showAppToast(message) {
+    if (!appToastEl) return;
+    if (appToastTimer) clearTimeout(appToastTimer);
+    appToastEl.textContent = message;
+    appToastEl.hidden = false;
+    appToastTimer = setTimeout(function () {
+      appToastEl.hidden = true;
+      appToastTimer = null;
+    }, 2200);
+  }
+
+  function setupHelpAndReset() {
+    if (helpBtn) {
+      helpBtn.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        if (isHelpOpen()) closeHelp();
+        else openHelp();
+      });
+    }
+    if (helpOverlay) {
+      helpOverlay.addEventListener("click", function (ev) {
+        if (ev.target.getAttribute("data-close") === "help") closeHelp();
+      });
+    }
+    if (resetOverlay) {
+      resetOverlay.addEventListener("click", function (ev) {
+        if (ev.target.getAttribute("data-close") === "reset") closeReset();
+      });
+    }
+    if (resetCancelBtn) {
+      resetCancelBtn.addEventListener("click", function () {
+        closeReset();
+      });
+    }
+    if (resetCheckEl && resetOkBtn) {
+      resetCheckEl.addEventListener("change", function () {
+        resetOkBtn.disabled = !resetCheckEl.checked;
+      });
+    }
+    if (resetOkBtn) {
+      resetOkBtn.addEventListener("click", function () {
+        if (!pendingReset || !resetCheckEl || !resetCheckEl.checked) return;
+        var scope = pendingReset;
+        var before = countResetTargets(scope);
+        applyScopedReset(scope);
+        closeReset();
+        refreshTabCounts();
+        renderList(false);
+        showAppToast(
+          before ? "リセットしました（" + before + "件）" : "リセット対象はありませんでした"
+        );
+      });
+    }
     document.addEventListener("keydown", function (ev) {
-      if (ev.key === "Escape" && isMenuOpen()) {
+      if (ev.key !== "Escape") return;
+      if (isResetOpen()) {
         ev.preventDefault();
-        closeMenu();
+        closeReset();
+      } else if (isHelpOpen()) {
+        ev.preventDefault();
+        closeHelp();
       }
     });
+  }
+
+  function setupSearch() {
+    if (!searchInput) return;
+    searchInput.addEventListener("input", function () {
+      setSearchQuery(searchInput.value);
+    });
+    if (searchClearBtn) {
+      searchClearBtn.addEventListener("click", function () {
+        searchInput.value = "";
+        setSearchQuery("");
+        searchInput.focus();
+      });
+    }
   }
 
   function boot() {
@@ -1222,7 +1483,8 @@
     if (unreadBtn) {
       unreadBtn.addEventListener("click", jumpToNearestUnread);
     }
-    setupMenu();
+    setupSearch();
+    setupHelpAndReset();
     updateNavBtns();
     document.addEventListener(
       "pointerdown",
