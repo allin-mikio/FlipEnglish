@@ -28,18 +28,17 @@
     </div>
 
     <div class="search-bar">
-      <label class="search-label" for="search-input">検索</label>
+      <span class="search-icon" aria-hidden="true">⌕</span>
       <input
         id="search-input"
         class="search-input"
-        type="search"
+        type="text"
         enterkeyhint="search"
         autocomplete="off"
         autocorrect="off"
         spellcheck="false"
-        placeholder="単語・訳で検索"
+        aria-label="検索"
       />
-      <button type="button" id="search-clear" class="search-clear" hidden aria-label="検索をクリア">×</button>
     </div>
 
     <fieldset class="filter-group filter-group-level">

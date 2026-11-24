@@ -3,12 +3,12 @@ all right,A1,other,,all right|allright
 CD player,A1,life,Objects and rooms,cd player|cdplayer
 closed,A1,other,,closed
 dancing,A1,hobby,Hobbies and pastimes,dancing
-doing,A1,other,,doing
+doing,A1,basics,,doing
 DVD,A1,hobby,Hobbies and pastimes,dvd
-each other,A1,other,,each other|eachother
+each other,A1,basics,,each other|eachother
 email/e-mail/E-mail,A1,hobby,Media,email|e-mail|e mail
 glasses,A1,life,Objects and rooms,glasses
-have to,A1,other,,have to|haveto
+have to,A1,basics,,have to|haveto
 Internet/internet,A1,hobby,Media,internet
 jeans,A1,life,Clothes,jeans
 mobile phone,A1,life,Objects and rooms,mobile phone|mobilephone
@@ -16,14 +16,14 @@ Olympics,A1,hobby,"News, lifestyles and current affairs",olympics
 anymore,A2,other,,anymore
 board game,A2,hobby,"Free time, entertainment",board game|boardgame
 boiled,A2,other,,boiled
-bored,A2,other,,bored
+bored,A2,feelings,,bored
 bus station,A2,town,Travel,bus station|busstation
 classical music,A2,other,,classical music|classicalmusic
 developed,A2,other,,developed
 digital camera,A2,hobby,"Free time, entertainment",digital camera|digitalcamera
 download,A2,other,,download
 dressed,A2,other,,dressed
-email,A2,other,,email
+email,A2,hobby,,email
 euro,A2,other,,euro
 fast food,A2,life,Food and drink,fast food|fastfood
 footballer,A2,people,Personal identification,footballer
@@ -36,9 +36,9 @@ hip hop/hip-hop/hiphop,A2,hobby,Hobbies and pastimes,hip hop|hiphop|hip-hop
 main course,A2,other,,main course|maincourse
 max,A2,other,,max
 MP3 player,A2,hobby,"Free time, entertainment",mp3 player|mp3player
-next to,A2,other,,next to|nextto
+next to,A2,basics,,next to|nextto
 olive oil,A2,other,,olive oil|oliveoil
-out of,A2,other,,out of|outof
+out of,A2,basics,,out of|outof
 petrol station,A2,life,"House and home, environment",petrol station|petrolstation
 relaxed,A2,other,,relaxed
 skateboarding,A2,hobby,"Free time, entertainment",skateboarding
@@ -50,14 +50,14 @@ tour guide,A2,people,Personal identification,tour guide|tourguide
 video game,A2,hobby,"Free time, entertainment",video game|videogame
 web page,A2,hobby,"Free time, entertainment",web page|webpage
 website,A2,hobby,Media,website
-according to,B1,other,,according to|accordingto
+according to,B1,basics,,according to|accordingto
 aerobics,B1,hobby,Hobbies and pastimes,aerobics
 air conditioning,B1,life,Objects and rooms,air conditioning|airconditioning
 annoyed,B1,other,,annoyed
 babysit,B1,other,,babysit
 backpacker,B1,town,Travel and services vocab,backpacker
 backpacking,B1,town,Travel and services vocab,backpacking
-because of,B1,other,,because of|becauseof
+because of,B1,basics,,because of|becauseof
 blog,B1,hobby,Hobbies and pastimes,blog
 blogger,B1,hobby,Hobbies and pastimes,blogger
 cashpoint,B1,town,"Things in the town, shops and shopping",cashpoint
@@ -77,7 +77,7 @@ divorced,B1,other,,divorced
 DJ,B1,people,Work and Jobs,dj
 eco,B1,other,,eco
 embarrassed,B1,other,,embarrassed
-eventually,B1,other,,eventually
+eventually,B1,time,,eventually
 excitedly,B1,other,,excitedly
 extensively,B1,other,,extensively
 extreme sports,B1,other,,extreme sports|extremesports
@@ -97,7 +97,7 @@ HIV,B1,town,Travel and services vocab,hiv
 hurriedly,B1,other,,hurriedly
 illegally,B1,other,,illegally
 initially,B1,other,,initially
-instead of,B1,other,,instead of|insteadof
+instead of,B1,basics,,instead of|insteadof
 intentionally,B1,other,,intentionally
 internationally,B1,other,,internationally
 interviewee,B1,other,,interviewee
@@ -107,7 +107,7 @@ mixing bowl,B1,other,,mixing bowl|mixingbowl
 modem,B1,hobby,Media,modem
 navy blue,B1,other,,navy blue|navyblue
 next door,B1,other,,next door|nextdoor
-ought to,B1,other,,ought to|oughtto
+ought to,B1,basics,,ought to|oughtto
 politely,B1,other,,politely
 public transport,B1,town,Ways of travelling,public transport|publictransport
 recycled,B1,other,,recycled
@@ -115,7 +115,7 @@ recycling,B1,other,,recycling
 refreshments,B1,life,Food and drink,refreshments
 reunification,B1,other,,reunification
 reunify,B1,other,,reunify
-scared,B1,other,,scared
+scared,B1,feelings,,scared
 shocked,B1,other,,shocked
 snowboard,B1,hobby,Leisure activities,snowboard
 social networking,B1,hobby,Hobbies and pastimes,social networking|socialnetworking
@@ -130,7 +130,7 @@ unfairly,B1,other,,unfairly
 uninteresting,B1,other,,uninteresting
 uplifted,B1,other,,uplifted
 upload,B1,other,,upload
-used to,B1,other,,used to|usedto
+used to,B1,basics,,used to|usedto
 video clip,B1,hobby,Media,video clip|videoclip
 visually,B1,other,,visually
 webcam,B1,hobby,Media,webcam
@@ -259,7 +259,7 @@ non-smoking,B2,other,,non-smoking|nonsmoking|non smoking
 nonprofessional,B2,other,,nonprofessional
 overbook,B2,other,,overbook
 overemphasize/overemphasise,B2,other,,overemphasize|overemphasise
-owing to,B2,other,,owing to|owingto
+owing to,B2,basics,,owing to|owingto
 paperless,B2,other,,paperless
 paramedic,B2,other,,paramedic
 passionately,B2,other,,passionately

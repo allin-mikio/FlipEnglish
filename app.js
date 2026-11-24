@@ -39,12 +39,16 @@
   ];
   var TOAST_MS = 5000;
   var CATS = [
-    { id: "all", label: "全部" },
-    { id: "life", label: "生活" },
-    { id: "town", label: "街・移動" },
-    { id: "people", label: "人・仕事" },
-    { id: "hobby", label: "趣味" },
-    { id: "other", label: "その他" },
+    { id: "all", label: "All" },
+    { id: "life", label: "Life" },
+    { id: "town", label: "Travel" },
+    { id: "people", label: "Work" },
+    { id: "hobby", label: "Hobby" },
+    { id: "nature", label: "Nature" },
+    { id: "feelings", label: "Feelings" },
+    { id: "time", label: "Time" },
+    { id: "basics", label: "Basics" },
+    { id: "other", label: "Other" },
   ];
   var BAND_PAD_Y = 30;
   var OVERSCAN = 10;
@@ -68,7 +72,6 @@
   var resetOkBtn = document.getElementById("reset-ok");
   var resetCancelBtn = document.getElementById("reset-cancel");
   var searchInput = document.getElementById("search-input");
-  var searchClearBtn = document.getElementById("search-clear");
   var appToastEl = document.getElementById("app-toast");
   var toastTimer = null;
   var appToastTimer = null;
@@ -448,7 +451,6 @@
 
   function setSearchQuery(raw) {
     searchQuery = normalizeSearch(raw);
-    if (searchClearBtn) searchClearBtn.hidden = !searchQuery;
     renderList(true);
     if (searchQuery && !viewCards.length) {
       setStatus("見つかりません", true);
@@ -1462,13 +1464,6 @@
     searchInput.addEventListener("input", function () {
       setSearchQuery(searchInput.value);
     });
-    if (searchClearBtn) {
-      searchClearBtn.addEventListener("click", function () {
-        searchInput.value = "";
-        setSearchQuery("");
-        searchInput.focus();
-      });
-    }
   }
 
   function boot() {
