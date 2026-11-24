@@ -139,6 +139,27 @@ body {
   outline: none;
 }
 
+.search-clear {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(36, 48, 56, 0.08);
+  color: var(--text);
+  font-family: var(--font-en);
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.search-clear[hidden] {
+  display: none;
+}
+
 .search-bar:focus-within {
   outline: 2px solid rgba(0, 184, 148, 0.45);
   outline-offset: 1px;

@@ -153,27 +153,58 @@ RULE_GROUPS: list[tuple[str, set[str], tuple[str, ...]]] = [
     (
         "nature",
         {
+            # animals
             "animal", "animals", "bird", "birds", "dog", "cat", "fish", "horse",
             "cow", "pig", "sheep", "lion", "tiger", "bear", "wolf", "fox", "mouse",
-            "insect", "bee", "butterfly", "tree", "trees", "flower", "flowers",
-            "plant", "plants", "grass", "leaf", "leaves", "forest", "wood", "woods",
-            "mountain", "mountains", "hill", "river", "lake", "sea", "ocean",
-            "beach", "island", "sky", "sun", "moon", "star", "stars", "cloud",
+            "rat", "deer", "rabbit", "hare", "elephant", "monkey", "ape", "snake",
+            "frog", "toad", "duck", "goose", "swan", "chicken", "hen", "rooster",
+            "goat", "eagle", "hawk", "owl", "crow", "sparrow", "pigeon", "parrot",
+            "ant", "spider", "fly", "mosquito", "insect", "bug", "bee", "wasp",
+            "butterfly", "moth", "whale", "shark", "dolphin", "seal", "penguin",
+            "crocodile", "turtle", "tortoise", "lizard", "dinosaur", "camel",
+            "zebra", "giraffe", "hippo", "rhino", "buffalo", "ox", "bull", "calf",
+            "lamb", "pony", "donkey", "mule", "pet", "puppy", "kitten", "cub",
+            "wildlife", "creature", "beast", "cattle", "poultry",
+            # plants
+            "tree", "trees", "flower", "flowers", "plant", "plants", "grass",
+            "leaf", "leaves", "forest", "wood", "woods", "jungle", "bush", "weed",
+            "seed", "root", "branch", "oak", "pine", "rose", "lily", "tulip",
+            "daisy", "sunflower", "lotus", "bamboo", "walnut", "chestnut",
+            "mushroom", "fungus", "moss", "vine", "herb", "crop", "harvest",
+            "blossom", "bloom", "petal", "pollen", "orchid",
+            # land / water / sky / weather
+            "mountain", "mountains", "hill", "valley", "cliff", "cave", "volcano",
+            "river", "lake", "sea", "ocean", "beach", "coast", "shore", "wave",
+            "island", "desert", "plain", "prairie", "waterfall", "stream", "pond",
+            "sky", "sun", "moon", "star", "stars", "planet", "cloud", "skyline",
             "rain", "rainy", "rainfall", "rainstorm", "rainbow", "snow", "snowy",
             "snowfall", "snowstorm", "wind", "windy", "storm", "thunder",
-            "thunderstorm", "lightning", "weather", "fog", "mist", "frost",
-            "nature", "earth", "ground", "soil", "rock", "stone", "sand", "field",
-            "garden", "farm", "wild", "natural", "environment", "climate",
-            "temperature", "hot", "cold", "warm", "cool", "freeze", "melt",
-            "rainforest",
+            "thunderstorm", "lightning", "weather", "fog", "mist", "frost", "dew",
+            "nature", "earth", "ground", "soil", "rock", "stone", "sand", "mud",
+            "field", "meadow", "garden", "farm", "wild", "wilderness", "natural",
+            "environment", "climate", "temperature", "hot", "cold", "warm", "cool",
+            "freeze", "melt", "rainforest", "landscape", "scenery", "horizon",
+            "tide", "current", "oxygen", "carbon", "species", "ecosystem",
         },
         (
-            "動物", "鳥", "犬", "猫", "魚", "馬", "牛", "豚", "羊", "虫", "木",
-            "花", "草", "葉", "森", "山", "川", "湖", "海", "浜", "島", "空",
-            "太陽", "月光", "月が", "月を", "星", "雲", "雨", "雪", "風", "嵐",
-            "雷", "天気", "自然", "地球", "地面", "岩", "石", "砂", "畑", "庭",
-            "気候", "気温", "環境", "霜", "霧", "虹", "植物", "雨林", "光",
-            "光線", "日光",
+            # 具体物は短くても誤爆しにくい語を中心に（括弧内の漢字も後で見る）
+            "動物", "生物", "生き物", "野生",
+            "鳥", "犬", "猫", "魚", "馬", "牛", "豚", "羊", "鹿", "シカ",
+            "ウサギ", "兎", "象", "ゾウ", "猿", "サル", "蛇", "ヘビ", "カエル",
+            "アヒル", "ガチョウ", "白鳥", "山羊", "ヤギ", "ワシ", "タカ", "フクロウ",
+            "カラス", "スズメ", "ハト", "インコ", "アリ", "クモ", "ハエ", "蚊",
+            "ハチ", "蝶", "チョウ", "蛾", "鯨", "クジラ", "サメ", "イルカ",
+            "アザラシ", "ペンギン", "カメ", "ワニ", "トカゲ", "恐竜", "ラクダ",
+            "シマウマ", "キリン", "カバ", "サイ", "虫", "昆虫", "ペット",
+            "樹木", "植物", "草花", "草原", "森林", "森", "ジャングル", "竹",
+            "バラ", "チューリップ", "ひまわり", "ヒマワリ", "蘭", "ラン",
+            "クルミ", "クリ", "きのこ", "キノコ", "苔", "種", "根", "枝",
+            "山", "山岳", "谷", "洞窟", "火山", "川", "河川", "湖", "海", "海洋",
+            "浜", "海岸", "波", "島", "砂漠", "滝", "池", "空", "太陽", "月光",
+            "月が", "月を", "星", "惑星", "雲", "雨", "雪", "風", "嵐", "雷",
+            "天気", "天候", "霧", "霜", "露", "虹", "自然", "地球", "地面",
+            "岩", "岩石", "砂", "泥", "畑", "庭", "気候", "気温", "環境",
+            "雨林", "風景", "景色", "光", "光線", "日光", "花", "草",
         ),
     ),
     (
@@ -320,6 +351,15 @@ def primary_ja_senses(ja: str, limit: int = 1) -> str:
     return " / ".join(parts[:limit])
 
 
+def ja_match_text(ja: str) -> str:
+    """First sense + parenthetical notes, e.g. シカ(鹿) -> also match 鹿."""
+    first = primary_ja_senses(ja, 1)
+    extras = re.findall(r"[\(（]([^\)）]+)[\)）]", first)
+    if not extras:
+        return first
+    return first + " " + " ".join(extras)
+
+
 def classify_by_rules(word: str, ja: str, pos: str) -> str:
     """Rule-based category for theme-less (or unmapped) headwords."""
     lemma_hit = lemma_category(word)
@@ -330,8 +370,8 @@ def classify_by_rules(word: str, ja: str, pos: str) -> str:
     if pos_l in BASICS_POS or pos_l == "number":
         return "basics"
 
-    # 例文は使わない。和訳は第1義のみ（第2義以降の部分一致誤爆を避ける）
-    ja_text = primary_ja_senses(ja, 1)
+    # 例文は使わない。和訳は第1義＋括弧内（シカ(鹿) 対策）
+    ja_text = ja_match_text(ja)
     for cat_id, _en_words, ja_keys in RULE_GROUPS:
         for key in ja_keys:
             if key in ja_text:

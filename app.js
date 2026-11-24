@@ -72,6 +72,7 @@
   var resetOkBtn = document.getElementById("reset-ok");
   var resetCancelBtn = document.getElementById("reset-cancel");
   var searchInput = document.getElementById("search-input");
+  var searchClearBtn = document.getElementById("search-clear");
   var appToastEl = document.getElementById("app-toast");
   var toastTimer = null;
   var appToastTimer = null;
@@ -451,6 +452,7 @@
 
   function setSearchQuery(raw) {
     searchQuery = normalizeSearch(raw);
+    if (searchClearBtn) searchClearBtn.hidden = !searchQuery;
     renderList(true);
     if (searchQuery && !viewCards.length) {
       setStatus("見つかりません", true);
@@ -1464,6 +1466,13 @@
     searchInput.addEventListener("input", function () {
       setSearchQuery(searchInput.value);
     });
+    if (searchClearBtn) {
+      searchClearBtn.addEventListener("click", function () {
+        searchInput.value = "";
+        setSearchQuery("");
+        searchInput.focus();
+      });
+    }
   }
 
   function boot() {
