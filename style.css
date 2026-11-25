@@ -265,6 +265,21 @@ body {
   color: var(--review);
 }
 
+.help-credits {
+  margin: 14px 0 4px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(36, 48, 56, 0.12);
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.help-credits code {
+  font-family: var(--font-en);
+  font-size: 0.85em;
+}
+
 .reset-dialog {
   position: relative;
   z-index: 1;

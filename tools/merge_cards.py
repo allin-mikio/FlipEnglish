@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Merge CEFR headwords (all levels) with EJDict-hand glosses."""
+"""Merge CEFR-J headwords (all levels) with EJDict-hand glosses.
+
+CEFR-J Vocabulary Profile: Tono Laboratory, TUFS — cite when redistributing.
+"""
 
 from __future__ import annotations
 
