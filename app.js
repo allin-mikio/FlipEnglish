@@ -315,6 +315,15 @@
   }
 
   var speakAudio = null;
+  var cachedEnglishVoice = null;
+  var voicesReady = false;
+
+  function isUsableAudioUrl(url) {
+    if (!url) return false;
+    // Free Dictionary の media URL は現在ほぼ404のため使わない
+    if (/dictionaryapi\.dev/i.test(url)) return false;
+    return true;
+  }
 
   function speakWord(word, audioUrl) {
     var text = (word || "").split("/")[0].trim();
@@ -330,12 +339,17 @@
     }
     if (window.speechSynthesis) window.speechSynthesis.cancel();
 
-    if (audioUrl) {
+    if (isUsableAudioUrl(audioUrl)) {
+      var usedFallback = false;
+      function fallbackOnce() {
+        if (usedFallback) return;
+        usedFallback = true;
+        speakWithWebSpeech(text);
+      }
       try {
         speakAudio = new Audio(audioUrl);
-        speakAudio.play().catch(function () {
-          speakWithWebSpeech(text);
-        });
+        speakAudio.addEventListener("error", fallbackOnce);
+        speakAudio.play().catch(fallbackOnce);
         return;
       } catch (err2) {
         /* fall through */
@@ -344,12 +358,98 @@
     speakWithWebSpeech(text);
   }
 
+  function pickEnglishVoice() {
+    if (cachedEnglishVoice) return cachedEnglishVoice;
+    if (!window.speechSynthesis || !speechSynthesis.getVoices) return null;
+    var voices = speechSynthesis.getVoices() || [];
+    if (!voices.length) return null;
+    var i;
+    var v;
+    var lang;
+    var name;
+    var score;
+    var best = null;
+    var bestScore = -1;
+    for (i = 0; i < voices.length; i++) {
+      v = voices[i];
+      lang = String(v.lang || "");
+      name = String(v.name || "");
+      // 日本語ボイスは英語でもカタカナ読みになりやすいので除外
+      if (/^ja\b/i.test(lang) || /japan|日本語|haruka|ichiro|ayumi|kyoko|nanami|keita/i.test(name)) {
+        continue;
+      }
+      if (!/^en\b/i.test(lang) && !/english/i.test(name)) continue;
+      score = 0;
+      if (/^en(-|_|$)/i.test(lang)) score += 20;
+      if (/en-US/i.test(lang)) score += 10;
+      if (/en-GB/i.test(lang)) score += 6;
+      if (/google/i.test(name)) score += 12;
+      if (/microsoft (aria|jenny|guy|zira|david|mark|hazel|susan)/i.test(name)) {
+        score += 14;
+      }
+      if (/natural|neural|online/i.test(name)) score += 4;
+      if (score > bestScore) {
+        bestScore = score;
+        best = v;
+      }
+    }
+    if (best) cachedEnglishVoice = best;
+    return best;
+  }
+
+  function warmSpeechVoices() {
+    if (!window.speechSynthesis || !speechSynthesis.getVoices) return;
+    speechSynthesis.getVoices();
+    speechSynthesis.addEventListener("voiceschanged", function () {
+      cachedEnglishVoice = null;
+      voicesReady = true;
+      pickEnglishVoice();
+    });
+    if (speechSynthesis.getVoices().length) {
+      voicesReady = true;
+      pickEnglishVoice();
+    }
+  }
+
   function speakWithWebSpeech(text) {
     if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
-    var utter = new SpeechSynthesisUtterance(text);
-    utter.lang = "en-US";
-    utter.rate = 0.92;
-    window.speechSynthesis.speak(utter);
+
+    function doSpeak() {
+      var utter = new SpeechSynthesisUtterance(text);
+      utter.rate = 0.92;
+      var voice = pickEnglishVoice();
+      if (voice) {
+        utter.voice = voice;
+        utter.lang = voice.lang || "en-US";
+      } else {
+        // 英語ボイスが無いと日本語エンジンのカタカナ読みになる
+        utter.lang = "en-US";
+      }
+      window.speechSynthesis.speak(utter);
+    }
+
+    if (!pickEnglishVoice() && !voicesReady && speechSynthesis.getVoices().length === 0) {
+      var retried = false;
+      function onVoices() {
+        if (retried) return;
+        retried = true;
+        speechSynthesis.removeEventListener("voiceschanged", onVoices);
+        voicesReady = true;
+        cachedEnglishVoice = null;
+        doSpeak();
+      }
+      speechSynthesis.addEventListener("voiceschanged", onVoices);
+      speechSynthesis.getVoices();
+      // voiceschanged が来ない環境向け
+      setTimeout(function () {
+        if (retried) return;
+        retried = true;
+        speechSynthesis.removeEventListener("voiceschanged", onVoices);
+        doSpeak();
+      }, 250);
+      return;
+    }
+    doSpeak();
   }
 
   function matchesFilter(card) {
@@ -1489,6 +1589,7 @@
     }
     setupSearch();
     setupHelpAndReset();
+    warmSpeechVoices();
     updateNavBtns();
     document.addEventListener(
       "pointerdown",
