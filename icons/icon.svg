@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="FlipEnglish">
+  <rect width="512" height="512" fill="#fff8f3"/>
+  <text
+    x="248"
+    y="300"
+    text-anchor="middle"
+    font-family="Fredoka, Segoe UI, Arial Rounded MT Bold, Arial, sans-serif"
+    font-size="260"
+    font-weight="700"
+    letter-spacing="-8"
+  >
+    <tspan fill="#ff4d2e">F</tspan><tspan fill="#00b894">E</tspan>
+  </text>
+</svg>

@@ -4,7 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="FlipEnglish" />
+  <meta name="theme-color" content="#ff4d2e" />
   <title>FlipEnglish</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Noto+Sans+JP:wght@500;700;900&display=swap" rel="stylesheet" />
@@ -14,7 +19,12 @@
   <header class="app-header">
     <div class="brand-row">
       <h1 class="brand" aria-label="FlipEnglish">
-        <span class="brand-flip">Flip</span><span class="brand-english">English</span>
+        <span class="brand-mark" aria-hidden="true">
+          <span class="brand-mark-f">F</span><span class="brand-mark-e">E</span>
+        </span>
+        <span class="brand-text">
+          <span class="brand-flip">Flip</span><span class="brand-english">English</span>
+        </span>
       </h1>
       <button
         type="button"
