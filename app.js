@@ -50,7 +50,7 @@
     { id: "basics", label: "Basics" },
     { id: "other", label: "Other" },
   ];
-  var BAND_PAD_Y = 30;
+  var BAND_PAD_Y = 40;
   var OVERSCAN = 10;
   var STORAGE_KEY = "flipenglish.status.v1";
   var LEGACY_CHECKED_KEY = "flipenglish.checked.v1";
@@ -92,8 +92,8 @@
   var filterUnread = false;
   var filterReview = false;
   var statusMap = loadStatusMap();
-  var baseH = 76;
-  var gapH = 8;
+  var baseH = 101;
+  var gapH = 10;
   var scrollRaf = 0;
   var lastRangeKey = "";
 
@@ -249,8 +249,8 @@
   }
 
   function refreshMetrics() {
-    baseH = cssPx("--band-h", 76);
-    gapH = cssPx("--card-gap", 8);
+    baseH = cssPx("--band-h", 101);
+    gapH = cssPx("--card-gap", 10);
   }
 
   function measureClassHeight(className, text, widthPx) {
@@ -698,8 +698,8 @@
     var exampleToggle = null;
     var exampleBody = null;
     var exampleBlock = null;
-    var EXAMPLE_TOGGLE_H = 22;
-    var EXAMPLE_GAP = 4;
+    var EXAMPLE_TOGGLE_H = 29;
+    var EXAMPLE_GAP = 5;
     var JA_MORE_H = 0;
 
     var jaBlock = document.createElement("div");
@@ -711,7 +711,7 @@
     jaBlock.appendChild(ja);
 
     var jaMore = null;
-    var WORD_ROW_H = 30;
+    var WORD_ROW_H = 40;
 
     if (hasExample) {
       exampleBlock = document.createElement("div");
