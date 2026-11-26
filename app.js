@@ -539,6 +539,8 @@
   }
 
   function activateCardContext(card) {
+    // 検索結果のカードをタップしたときだけ使う。通常一覧では何もしない
+    if (!searchQuery) return;
     var levelChanged = card.cefr !== activeLevel;
     var catChanged = card.cat !== activeCat;
     if (!levelChanged && !catChanged) return;
@@ -546,8 +548,6 @@
     activeCat = card.cat || "all";
     renderTabs();
     renderCats();
-    // 検索中はリストを保ち、タブだけ所属位置に合わせる
-    if (!searchQuery) renderList(false);
   }
 
   function setSearchQuery(raw) {
@@ -828,7 +828,8 @@
       }
     }
 
-    function applyStatus(status) {
+    function applyStatus(status, opts) {
+      var skipRelist = !!(opts && opts.skipRelist);
       setStatusState(card, status);
       current = status;
       root.className =
@@ -838,7 +839,8 @@
       markBtn.textContent = statusMarkText(status);
       markBtn.setAttribute("aria-label", card.word + " " + statusAria(status));
       refreshTabCounts();
-      if (!isCardInCurrentView(card)) {
+      // 裏返し直後は再描画しない（未読フィルタ中に最初のタップでDOMが消えるのを防ぐ）
+      if (!skipRelist && !isCardInCurrentView(card)) {
         renderList(false);
         return;
       }
@@ -856,7 +858,6 @@
     }
 
     function showBack() {
-      activateCardContext(card);
       var wasUnread = current === STATUS_UNREAD;
       if (hasExample) setExampleOpen(true);
       setJaExpanded(false);
@@ -867,7 +868,9 @@
       front.setAttribute("aria-hidden", "true");
       back.setAttribute("aria-hidden", "false");
       // 裏を見た時点で未読→学習済み。要復習は手動専用
-      if (wasUnread) applyStatus(STATUS_LEARNED);
+      if (wasUnread) applyStatus(STATUS_LEARNED, { skipRelist: true });
+      // 検索中のみ: 所属 Level/Category タブを合わせる（リストは再構築しない）
+      if (searchQuery) activateCardContext(card);
       // 未読フリップ時は裏面の占有高さ分スクロールし、同じ位置のタップで次へ進める
       if (wasUnread) {
         window.scrollBy({
@@ -1204,11 +1207,11 @@
 
     var school = document.createElement("div");
     school.className = "level-toast-line";
-    school.textContent = "学校: " + info.school;
+    school.textContent = info.school;
 
     var eiken = document.createElement("div");
     eiken.className = "level-toast-line";
-    eiken.textContent = "英検: " + info.eiken;
+    eiken.textContent = info.eiken;
 
     var words = document.createElement("div");
     words.className = "level-toast-words";
